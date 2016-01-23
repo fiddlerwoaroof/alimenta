@@ -1,1 +1,1 @@
-This is the stub README.txt for the "alimenta" project.
+The beginnings of a new RSS library :)
