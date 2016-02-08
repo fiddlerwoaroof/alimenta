@@ -13,6 +13,7 @@
   :serial t
   :components ((:file "package")
                (:file "alimenta")  
+               (:file "atom")  
                (:file "fetching")
                (:file "discovery")))
 

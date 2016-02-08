@@ -24,18 +24,10 @@
 
 (defgeneric %to-feed (doc type &key feed-link))
 
-(defgeneric get-items (feed doc type)
-  (:documentation
-    "Get items for a feed. Specialize a symbol on type, to get items from a new sort of feed"))
-
 (defgeneric %generate-xml (feed feed-type &key partial))
 
 (defun generate-xml (feed &key (feed-type :rss))
   (%generate-xml feed feed-type))
-
-(defmethod %generate-xml :around (feed feed-type &key partial)
-  (call-next-method feed feed-type :partial partial))
-
 
 (defun to-feed (doc &key type feed-link)
   "Makes an instance of feed from the given document.  Specialize %to-feed with
@@ -45,9 +37,12 @@
     (setf type (detect-feed-type doc)))
   (%to-feed doc type :feed-link feed-link))
 
+(defgeneric %get-items (xml feed-type)
+  (:method (xml-dom (feed-type (eql :rss))) ($ (inline xml-dom) "channel > item")))
+
 (defun get-items (feed xml-dom &key type)
   (with-slots (items) feed
-    (loop for item across ($ (inline xml-dom) "channel > item")
+    (loop for item across (%get-items xml-dom type)
           do (push (make-item xml-dom type) items)
           finally (return items)))) 
 
@@ -57,8 +52,11 @@
   (aprog1 (call-next-method xml-dom doc-type :feed-link feed-link)
     (with-slots (doc source-type) it
       (setf doc xml-dom
-            source-type feed-link))
-    (get-items it xml-dom :type doc-type)))
+            source-type doc-type))
+    (with-slots (items) it
+      (setf
+        items (loop for item across (%get-items xml-dom doc-type)
+                    collect (make-item item doc-type))))))
 
 (defgeneric feed-to-rss (feed))
 (defgeneric feed-to-atom (feed))
@@ -126,7 +124,9 @@
               (aif title (shorten-link it) "<untitled>")
               (aif link (shorten-link it) "<no link>")))))
 
-(defmethod %generate-xml ((feed feed) (feed-type (eql :rss)) &rest r)
+(defclass rss-feed (feed) ())
+
+(defmethod %generate-xml ((feed rss-feed) (feed-type (eql :rss)) &rest r)
   (declare (ignore r))
   (let* ((xml-root (plump:make-root))
          (feed-root (plump:make-element xml-root "rss"))
@@ -152,10 +152,34 @@
 (defclass item ()
   ((title :initarg :title :initform nil)
    (id :initarg :id :initform nil)
+   (author :initarg :author :initform nil)
    (date :initarg :date :initform nil)
    (link :initarg :link :initform nil)
+   (links :initform (make-hash-table :test #'equalp))
    (content :initarg :content :initform nil)
    (doc :initarg :doc :initform nil)))
+
+(defgeneric (setf link) (value self))
+
+(define-condition duplicate-link-type (error)
+  ((old :reader duplicate-link-type-old :initarg :old)
+   (new :reader duplicate-link-type-new :initarg :new))
+  (:report (lambda (condition stream)
+             (format stream "Item already has link ~s" (duplicate-link-type-old condition)))))
+
+(defmethod (setf link) ((value cons) (self item))
+  (with-slots (links) self
+    (destructuring-bind (type . href) value
+      (when (consp href)
+        (if (null (cdr href))
+          (setf href (car href))
+          (error 'type-error "too many arguments")))
+      (let ((type-keyword (make-keyword (string-upcase type))))
+        (when (slot-boundp self 'links)
+          (multiple-value-bind (old-link old-link-p) (gethash type-keyword links) 
+            (when old-link-p
+              (cerror "Replace Link ~a:~a with ~a:~a" 'duplicate-link-type :old old-link :new href))))
+        (setf (gethash type-keyword links) href)))))
 
 (defmethod %generate-xml ((item item) (feed-type (eql :rss)) &key partial)
   (prog1 partial
@@ -204,39 +228,12 @@
         (doc-link ($ "channel > link" (text) (node)))
         (doc-feed-link (or feed-link
                            ($ "feed > atom::link[rel=self]" (first) (attr "href") (node)))))
-    (make-instance 'feed :title doc-title :link doc-link :feed-link doc-feed-link)))
+    (make-instance 'rss-feed :title doc-title :link doc-link :feed-link doc-feed-link)))
 ;}}} 
 
 ; {{{ ATOM feed handling
-(defmethod make-item (xml-dom (type (eql :atom)))
-  (let* ((item-title ($ "> title" (text) (node)))
-         (item-link ($ "> link[rel=alternate]" (attr "href") (first) (node)))
-         (item-date (or ($ "> updated" (text) (node))
-                        ($ "> published" (text) (node)))) ;; Which should be default?
-         (item-guid ($ "> id" (text) (node)))
-         (item-description ($ "> summary" (text) (node)))
-         (item-content ($ "> content" (text) (node)))
-         (*tag-dispatchers* *html-tags*) 
-         (content (with-output-to-string (s)
-                    (serialize (parse (or item-content item-description)) s))))
-    (make-instance 'item
-                   :content content   
-                   :date item-date 
-                   :id item-guid 
-                   :link item-link 
-                   :title item-title)))
 
-(defmethod %to-feed (xml-dom (type (eql :atom)) &key feed-link)
-  (declare (ignore type) (ignorable feed-link))
-  ; TODO: store feed-link
-  (lquery:initialize xml-dom)
-  (let ((doc-title ($ "feed > title" (text) (node)))
-        (doc-link ($ "feed > link[rel=alternate]" (first) (attr "href") (node)))
-        (doc-feed-link (or feed-link
-                           ($ "feed > link[rel=self]" (first) (attr "href") (node)))))
-    (make-instance 'feed :title doc-title :link doc-link :feed-link doc-feed-link)))
-;}}}
-  
+
 (defun rdf-to-feed (xml-dom))
 (defun json-to-feed (json-object))
 (defun html5-to-feed (html-dom))
