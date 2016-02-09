@@ -4,20 +4,6 @@
 (ql:quickload :spinneret)
 (ql:quickload :lass)
 
-(defmethod araneus:view ((name (eql 'root)) (item alimenta:item))
-  (with-slots ((title alimenta:title) (link alimenta:link)) item
-    (spinneret:with-html 
-      (:article
-        (:div.title title)
-        (:a.link :href link link)))))
-
-(defmethod araneus:view ((name (eql 'root)) (feed alimenta:feed))
-  (with-slots ((title alimenta:title) (link alimenta:link)) feed
-    (spinneret:with-html
-      (:header
-        (:h1.feed-title title)
-        (:a.feed-link link)))))
-
 (defun get-css ()
   (lass:compile-and-write
     `(*
@@ -44,6 +30,20 @@
        :min-height "4em"
        )
     ))
+
+ (defmethod araneus:view ((name (eql 'root)) (item alimenta:item))
+  (with-slots ((title alimenta:title) (link alimenta:link)) item
+    (spinneret:with-html 
+      (:article
+        (:div.title title)
+        (:a.link :href link link)))))
+
+(defmethod araneus:view ((name (eql 'root)) (feed alimenta:feed))
+  (with-slots ((title alimenta:title) (link alimenta:link)) feed
+    (spinneret:with-html
+      (:header
+        (:h1.feed-title title)
+        (:a.feed-link link)))))
 
 (defmethod araneus:view :around ((name (eql 'root)) (feed alimenta:feed))
   (with-slots ((title alimenta:title) (items alimenta::items)) feed

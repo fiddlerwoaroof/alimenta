@@ -14,6 +14,7 @@
   :components ((:file "package")
                (:file "alimenta")  
                (:file "atom")  
+               (:file "rss")  
                (:file "fetching")
                (:file "discovery")))
 

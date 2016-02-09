@@ -18,12 +18,13 @@
   (make-instance 'atom-person :name name :uri uri :email email))
 
 (defclass atom-feed (alimenta:feed)
-  ((subtitle   :initarg :subtitle                                 :initform nil)
-   (id         :initarg :id                                       :initform nil)
-   (icon       :initarg :icon                                     :initform nil)
+  ((subtitle   :initarg :subtitle                        :initform nil)
+   (id         :initarg :id                              :initform nil)
+   (icon       :initarg :icon                            :initform nil)
    (categories :initarg :categories :type (or null list) :initform nil)
-   (logo       :initarg :logo                                     :initform nil)
-   (authors    :initarg :authors    :type (or null list)   :initform nil)))
+   (logo       :initarg :logo                            :initform nil)
+   (updated    :initarg :updated                         :initform nil)
+   (authors    :initarg :authors    :type (or null list) :initform nil)))
 
 (defclass atom-item (alimenta:item)
   ((author-uri :initarg :author-uri :initform nil)))
@@ -64,7 +65,7 @@
                     (awhen (or item-content item-description) (serialize  (parse it) s)))))
     (make-instance 'atom-item
                    :content content
-                   :date item-date
+                   :date (local-time:parse-timestring item-date)
                    :id item-guid
                    :author item-author
                    :author-uri item-author-uri
@@ -90,6 +91,7 @@
           (doc-icon (get-feed-elem "feed > icon"))
           (doc-logo (get-feed-elem "feed > logo"))
           (doc-id (get-feed-elem "feed > id"))
+          (doc-updated (awhen (get-feed-elem "feed > updated") (local-time:parse-timestring it)))
           (doc-link (get-feed-elem-attr "feed > link[rel=alternate]" "href"))
           (doc-feed-link (or feed-link (get-feed-elem-attr "feed > link[rel=self]" "href")))
           (doc-categories ($ (inline xml-dom) "feed > category"
@@ -102,6 +104,7 @@
         :icon doc-icon
         :logo doc-logo
         :link doc-link
+        :updated doc-updated
         :id doc-id
         :feed-link doc-feed-link
         :subtitle doc-subtitle
@@ -134,7 +137,7 @@
                     (plump:make-element (plump:make-root) "feed"))))
     (prog1 parent
       (let ((feed-root (make-element parent "feed")))
-        (with-slots (title id link feed-link description) feed
+        (with-slots (title id updated link feed-link description) feed
           ($ (inline (make-element feed-root "title")) (text title)
 
              (inline (make-element feed-root "link"))
@@ -145,6 +148,7 @@
 
              (inline (make-element feed-root "id")) (text id) (node)
              (inline (make-element feed-root "summary")) (text description) (node)
+             (inline (make-element feed-root "updated")) (text updated) (node)
              ))))))
 
 
@@ -161,7 +165,9 @@
              (inline (make-element item-root "author"))
              (append ($ (inline (make-element item-root "name")) (text author)))
              (append ($ (inline (make-element item-root "uri"))  (text author-uri)))
-             (inline (make-element item-root "content")) (text content)))))))
+             (inline (make-element item-root "content")) (text content)
+             (inline (make-element item-root "updated")) (text date) (node)
+             ))))))
 
 
 (defconstants-really

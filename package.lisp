@@ -6,6 +6,9 @@
            #:feed #:title #:link #:items #:feed-link #:doc #:source-type #:id #:date #:content
            #:item #:description #:%generate-xml #:%to-feed #:%get-items #:make-item))
 
+(defpackage #:alimenta.rss
+  (:use #:cl #:should-test #:lquery #:plump #:alexandria #:anaphora #:alimenta))
+
 (defpackage #:alimenta.atom
   (:use #:cl #:should-test #:lquery #:plump #:alexandria #:anaphora #:alimenta))
 
