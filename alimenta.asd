@@ -9,6 +9,7 @@
                #:should-test
                #:alexandria
                #:anaphora
+               #:chronicity
                #:drakma)
   :serial t
   :components ((:file "package")

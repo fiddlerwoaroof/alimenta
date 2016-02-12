@@ -64,6 +64,7 @@
          (content (with-output-to-string (s)
                     (awhen (or item-content item-description) (serialize  (parse it) s)))))
     (make-instance 'atom-item
+		   :doc xml-dom
                    :content content
                    :date (local-time:parse-timestring item-date)
                    :id item-guid
