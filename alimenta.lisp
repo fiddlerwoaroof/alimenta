@@ -22,6 +22,12 @@
    (content :initarg :content :initform nil)
    (doc :initarg :doc :initform nil)))
 
+(defclass complex-value () ())
+
+(defgeneric primary-value (self)
+  (:documentation "Primarily for COMPLEX-VALUES: this should take one and return a useful primary value")
+  (:method ((self t)) self))
+
 (define-condition duplicate-link-type (error)
   ((old :reader duplicate-link-type-old :initarg :old)
    (new :reader duplicate-link-type-new :initarg :new))

@@ -1,42 +1,111 @@
 (declaim (optimize (speed 0) (safety 3) (debug 3)))
 
 (in-package :alimenta.rss)
+(defun get-date (str)
+  (handler-case
+    (local-time:parse-timestring str)
+    (local-time::invalid-timestring (c) (declare (ignore c))
+      (multiple-value-bind (res groups) (cl-ppcre:scan-to-strings "(.*)\s*([+-][0-9]{2,4})\s?$" str)
+        (let ((local-time:*default-timezone* local-time:+utc-zone+))
+          (let* ((timestamp (string-trim " " (if res (elt groups 0) str)))
+                 (hour-offset (if res (parse-integer (elt groups 1) :end 3) 0)) 
+                 (minute-offset (if (and res (> (length (elt groups 1)) 3))
+                                  (* (signum hour-offset) (parse-integer (elt groups 1) :start 3))
+                                  0)))
+                  
+            (local-time:timestamp- (local-time:timestamp- (chronicity:parse timestamp) minute-offset :minute)
+                                   hour-offset :hour)))))))
 
-(defclass rss-feed (feed)
-  ((language :initarg :language :initform nil)
-   (copyright :initarg :copyright :initform nil)
-   (managing-editor :initarg :managing-editor :initform nil)
-   (webmaster :initarg :webmaster :initform nil)
-   (publication-date :initarg :publication-date :initform nil)
-   (last-build-date :initarg :last-build-date :initform nil)
-   (categories :initarg :categories :initform nil)
-   (generator :initarg :generator :initform nil)
-   (docs :initarg :docs :initform nil)
-   (cloud :initarg :cloud :initform nil)
-   (ttl :initarg :ttl :initform nil)
-   (image :initarg :image :initform nil)
-   (rating :initarg :rating :initform nil)
-   (text-input :initarg :text-input :initform nil)
-   (skip-hours :initarg :skip-hours :initform nil)
-   (skip-days :initarg :skip-days :initform nil)))
 
-(defclass rss-item (feed) ())
+(defclass rss-image ()
+  ((url :initarg :url :initform nil)
+   (title :initarg :title :initform nil)
+   (link :initarg :link :initform nil)
+   (width :initarg :width :initform nil)
+   (height :initarg :height :initform nil)
+   (description :initarg :description :initform nil)))
+
+(defmethod print-object ((self rss-image) stream)
+  (print-unreadable-object (self stream :type t :identity t)
+    (format stream "~a" (slot-value self 'url))))
+
+(defmethod primary-value ((self rss-image))
+  (slot-value self 'url))
+
+(defun make-image (url title &optional link width height description)
+  (let ((link (or link url)))
+    (make-instance 'rss-image
+                   :url url
+                   :title title
+                   :link link
+                   :width width
+                   :height height
+                   :description description)))
+
+(defclass rss-category ()
+  ((category :initarg :category :initform nil)
+   (domain :initarg :domain :initform nil)))
+
+(defmethod print-object ((self rss-category) stream)
+  (print-unreadable-object (self stream :type t :identity t)
+    (format stream "~a~@[ ~a~]"
+            (slot-value self 'category)
+            (slot-value self 'domain))))
+
+(defmethod primary-value ((self rss-category))
+  (slot-value self 'category))
+
+(defun make-category (category &optional domain)
+ (make-instance 'rss-category :category category :domain domain))
+
+(defun get-categories (doc tag)
+  ($ (inline doc) tag
+     (combine (text) (attr "domain"))
+     (map-apply #'make-category)))
+
+(define-data-class rss-feed (doc "channel") (feed)
+  language copyright webmaster
+  generator docs cloud ttl rating
+  (image "image"
+         :value (apply #'make-image
+                       (mapcar (lambda (x) (when (> (length x) 0)
+                                             (plump:text (elt x 0))))
+                               (let ((plump:*tag-dispatchers* plump:*xml-tags*))
+                                 ($1 (inline doc) "channel > image"
+                                     (combine "url" "title" "link" "width" "height"
+                                              "description")))))) 
+
+  (categories "category" :value (get-categories doc  "channel > category"))
+  (text-input "textInput")
+  (managing-editor "managingEditor") 
+  (skip-days "skipDays")
+  (skip-hours "skipHours") 
+  (publication-date "publicationDate" :transform get-date) 
+  (last-build-date "lastBuildDate" :transform get-date))
+
+(define-data-class rss-item (doc "") (item)
+  (categories "category" :value (get-categories doc "> category"))
+  source comments enclosure )
 
 (defmethod %get-items (xml-dom (feed-type (eql :rss)))
   ($ (inline xml-dom) "channel > item"))
 
 (defmethod %generate-xml ((item item) (feed-type (eql :rss)) &key partial)
   (prog1 partial
-    (let ((item-root (make-element ($ (inline partial) "channel" (node)) "item")))
-      (with-slots (title id date link content) item
-        ($ (inline (make-element item-root "title")) (text title)) 
-        ($ (inline (make-element item-root "link")) (text link)) 
-        (plump-dom:set-attribute
-          ($ (inline (make-element item-root "guid")) (text id) (node))
-          "isPermaLink"
-          "false") 
-        ($ (inline (make-element item-root "pubDate")) (text date)) 
-        ($ (inline (make-element item-root "description")) (text content))))))
+    (let ((item-root (make-element ($1 (inline partial) "channel") "item")))
+      (flet ((make-element (tag) (make-element item-root tag)))
+        (with-slots (title id date link content) item
+          ($ (inline (make-element "title")) (text title)
+            (inline (make-element "link")) (text link)
+            (inline (make-element "pubDate")) (text date)
+            (inline (make-element "description")) (text content))    
+          (plump-dom:set-attribute
+            ($ (inline (make-element "guid")) (text id) (node))
+            "isPermaLink"
+            "false") 
+          ))
+
+      )))
 
 (defmethod %generate-xml ((feed feed) (feed-type (eql :rss)) &rest r)
   (declare (ignore r))
@@ -62,17 +131,18 @@
     xml-root))
 
 (defmethod make-item (xml-dom (type (eql :rss)))
-  (let* ((item-title ($ "item > title" (text) (node)))
-         (item-link ($ "item > link" (text) (node)))
-         (item-date (get-date ($ "item > pubDate" (text) (node))))
-         (item-guid ($ "item > guid" (text) (node)))
-         (item-description ($ "item > description" (text) (node)))
-         (item-content-encoded ($ "item > content::encoded" (text) (node)))
+  (let* ((*lquery-master-document* xml-dom)
+         (item-title ($1 "> title" (text)))
+         (item-link ($1 "> link" (text)))
+         (item-date (awhen ($1 "> pubDate" (text)) (get-date it)))
+         (item-guid ($1 "> guid" (text)))
+         (item-description ($1 "> description" (text)))
+         (item-content-encoded ($1 "> content::encoded" (text)))
          (content (aif (or item-content-encoded item-description)
                     (with-output-to-string (s)
                       (serialize (parse (or item-content-encoded item-description)) s))))
          (*tag-dispatchers* *html-tags*))
-    (make-instance 'item
+    (make-instance 'rss-item
                    :content content   
                    :date item-date
                    :doc xml-dom
@@ -80,62 +150,33 @@
                    :link item-link
                    :title item-title)))
 
-(defun get-date (str)
-  (handler-case
-    (local-time:parse-timestring str)
-    (local-time::invalid-timestring (c) (declare (ignore c))
-      (multiple-value-bind (res groups) (cl-ppcre:scan-to-strings "(.*)\s*([+-][0-9]{2,4})\s?$" str)
-        (let ((local-time:*default-timezone* local-time:+utc-zone+))
-          (let ((timestamp (string-trim " " (if res (elt groups 0) str)))
-                (offset (if res (parse-integer (elt groups 1)) 0)))
-            (local-time:timestamp- (chronicity:parse timestamp) offset :hour)))))))
+(deftest get-date ()
+  (should be local-time:timestamp=
+          (local-time:parse-timestring "2016-01-09T23:00:00.000000-0100")
+          (get-date "Fri, 09 Jan 2016 23:00:00-0100"))
+  (should be local-time:timestamp=
+          (local-time:parse-timestring "2016-01-09T23:00:00.000000-0100")
+          (get-date "Fri, 09 Jan 2016 23:00:00 -0100"))
+  (should be local-time:timestamp=
+          (local-time:parse-timestring "2016-01-09T23:00:00.000000-0100")
+          (get-date "Fri, 09 Jan 2016 22:00:00 -0200"))  
+  (should be local-time:timestamp=
+          (local-time:parse-timestring "2016-01-09T23:00:00.000000-0100")
+          (get-date "Fri, 09 Jan 2016 21:30:00 -0230"))) 
 
 (defmethod %to-feed (xml-dom (type (eql :rss)) &key feed-link)
   ; TODO: store feed-link
-  (lquery:initialize xml-dom)
   (flet ((get-channel-element (el)
            ($ (inline xml-dom) el (text) (node))))
-    (let ((doc-title (get-channel-element "channel > title"))
-          (doc-link (get-channel-element "channel > link"))
-
-          (doc-language (get-channel-element "channel > language"))
-          (doc-copyright (get-channel-element "channel > copyright"))
-          (doc-managing-editor (get-channel-element "channel > managingEditor"))
-          (doc-webmaster (get-channel-element "channel > webMaster"))
-          (doc-publication-date (awhen (get-channel-element "channel > pubDate") (get-date it)))
-          (doc-last-build-date (awhen (get-channel-element "channel > lastBuildDate") (get-date it)))
-          (doc-categories (get-channel-element "channel > category"))
-          (doc-generator (get-channel-element "channel > generator"))
-          (doc-docs (get-channel-element "channel > docs"))
-          (doc-cloud (get-channel-element "channel > cloud"))
-          (doc-ttl (get-channel-element "channel > ttl"))
-          (doc-image (get-channel-element "channel > image"))
-          (doc-rating (get-channel-element "channel > rating"))
-          (doc-text-input (get-channel-element "channel > textInput"))
-          (doc-skip-hours (get-channel-element "channel > skipHours"))
-          (doc-skip-days (get-channel-element "channel > skipDays"))
-
-          (doc-feed-link (or feed-link
-                             ($ "feed > atom::link[rel=self]" (attr "href") (node)))))
+    (let* ((*lquery-master-document* xml-dom)
+           (doc-title (get-channel-element "channel > title"))
+           (doc-link (get-channel-element "channel > link"))
+           (doc-description (get-channel-element "channel > description"))
+           (doc-feed-link (or feed-link
+                              ($ "feed > atom::link[rel=self]" (attr "href") (node)))))
       (make-instance 'rss-feed
-        :title doc-title 
-        :link doc-link 
-        :feed-link doc-feed-link
-        
-        :language doc-language
-        :copyright doc-copyright
-        :managing-editor doc-managing-editor
-        :webmaster doc-webmaster
-        :publication-date doc-publication-date
-        :last-build-date doc-last-build-date
-        :categories doc-categories
-        :generator doc-generator
-        :docs doc-docs
-        :cloud doc-cloud
-        :ttl doc-ttl
-        :image doc-image
-        :rating doc-rating
-        :text-input doc-text-input
-        :skip-hours doc-skip-hours
-        :skip-days doc-skip-days))))
+        :title doc-title
+        :link doc-link
+        :description doc-description
+        :feed-link doc-feed-link))))
 

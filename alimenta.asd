@@ -10,6 +10,7 @@
                #:alexandria
                #:anaphora
                #:chronicity
+               #:fwoar.lisputils
                #:drakma)
   :serial t
   :components ((:file "package")

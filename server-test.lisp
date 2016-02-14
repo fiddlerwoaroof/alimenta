@@ -9,10 +9,11 @@
     `(*
        :padding "0px"
        :margin "0px")
+
     `(body
        :box-sizing "border-box"
        :font-family sans-serif
-       )
+       :background "#888")
 
     `(header
        :border-bottom "thin solid black"
@@ -21,22 +22,33 @@
        :margin-bottom "2em"
        :padding "1em")
 
+    `(div.articles
+       :display "flex"
+       :flex-flow "row"
+       :flex-wrap "wrap-reverse"
+       :align-items "baseline"
+       :justify-content "space-around"
+       :align-content "space-between"
+       )
+
     `(article
        :padding "1em"
        :border "4px double #888"
-       :display "inline-block"
+       :vertical-align "middle"
        :width "30%"
        :overflow "hidden"
        :min-height "4em"
+       :background "#aaa"
        )
     ))
 
  (defmethod araneus:view ((name (eql 'root)) (item alimenta:item))
-  (with-slots ((title alimenta:title) (link alimenta:link)) item
+  (with-slots ((title alimenta:title) (link alimenta:link) (content alimenta:content)) item
     (spinneret:with-html 
       (:article
         (:div.title title)
-        (:a.link :href link link)))))
+        (:a.link :href link link)
+        (:div.content (:raw content))))))
 
 (defmethod araneus:view ((name (eql 'root)) (feed alimenta:feed))
   (with-slots ((title alimenta:title) (link alimenta:link)) feed
@@ -56,13 +68,14 @@
         (:body
           (:main
             (call-next-method)
-            (loop for item in items
-                  do (araneus:view 'root item))))))))
+            (:div.articles
+              (loop for item in items
+                    do (araneus:view 'root item)))))))))
 
 (araneus:define-controller root (params)
-  (let* ((url "https://reddit.com/r/programming.rss")
+  (let* ((url "http://thomism.wordpress.com/feed/atom")
          (feed (alimenta.pull-feed::fetch-doc-from-url url)))
-    (alimenta:to-feed feed :type :atom :feed-link url)))
+    (alimenta:to-feed feed :feed-link url)))
 
 (defvar *app* (make-instance 'ningle:<app>))
 

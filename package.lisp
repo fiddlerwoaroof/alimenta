@@ -1,13 +1,21 @@
 ;;;; package.lisp
 
+(defpackage #:data-class
+  (:use #:cl #:should-test #:lquery #:plump #:alexandria #:anaphora)
+  (:export #:define-data-class))
+
 (defpackage #:alimenta
   (:use #:cl #:should-test #:lquery #:plump #:alexandria #:anaphora)
   (:export #:to-feed #:generate-xml
            #:feed #:title #:link #:items #:feed-link #:doc #:source-type #:id #:date #:content
-           #:item #:description #:%generate-xml #:%to-feed #:%get-items #:make-item))
+           #:item #:description #:%generate-xml #:%to-feed #:%get-items #:make-item #:complex-value
+           #:primary-value))
 
 (defpackage #:alimenta.rss
-  (:use #:cl #:should-test #:lquery #:plump #:alexandria #:anaphora #:alimenta))
+  (:use #:cl #:should-test #:lquery #:plump #:alexandria #:anaphora #:alimenta)
+  (:export #:language #:copyright #:managing-editor #:webmaster #:publication-date #:last-build-date
+           #:categories #:generator #:docs #:cloud #:ttl #:image #:rating #:text-input #:skip-hours
+           #:skip-days #:rss-feed #:rss-item))
 
 (defpackage #:alimenta.atom
   (:use #:cl #:should-test #:lquery #:plump #:alexandria #:anaphora #:alimenta))
@@ -18,7 +26,7 @@
 
 (defpackage #:alimenta.pull-feed 
   (:use #:cl #:alimenta #:alexandria #:anaphora #:lquery)
-  (:export #:pull-feed)) 
+  (:export #:pull-feed #:fetch-doc-from-url)) 
 
 (defmethod asdf:perform ((o asdf:test-op) (s (eql (asdf:find-system :alimenta))))
   (asdf:load-system :alimenta)
