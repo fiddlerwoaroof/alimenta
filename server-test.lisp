@@ -42,7 +42,7 @@
        )
     ))
 
- (defmethod araneus:view ((name (eql 'root)) (item alimenta:item))
+(defmethod araneus:view ((name (eql 'root)) (item alimenta:item))
   (with-slots ((title alimenta:title) (link alimenta:link) (content alimenta:content)) item
     (spinneret:with-html 
       (:article
