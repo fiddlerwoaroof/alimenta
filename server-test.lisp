@@ -73,7 +73,7 @@
                     do (araneus:view 'root item)))))))))
 
 (araneus:define-controller root (params)
-  (let* ((url "http://thomism.wordpress.com/feed/atom")
+  (let* ((url "http://reddit.com/r/programming.rss")
          (feed (alimenta.pull-feed::fetch-doc-from-url url)))
     (alimenta:to-feed feed :feed-link url)))
 
