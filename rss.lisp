@@ -1,20 +1,5 @@
 (declaim (optimize (speed 0) (safety 3) (debug 3)))
-
 (in-package :alimenta.rss)
-(defun get-date (str)
-  (handler-case
-    (local-time:parse-timestring str)
-    (local-time::invalid-timestring (c) (declare (ignore c))
-      (multiple-value-bind (res groups) (cl-ppcre:scan-to-strings "(.*)\s*([+-][0-9]{2,4})\s?$" str)
-        (let ((local-time:*default-timezone* local-time:+utc-zone+))
-          (let* ((timestamp (string-trim " " (if res (elt groups 0) str)))
-                 (hour-offset (if res (parse-integer (elt groups 1) :end 3) 0)) 
-                 (minute-offset (if (and res (> (length (elt groups 1)) 3))
-                                  (* (signum hour-offset) (parse-integer (elt groups 1) :start 3))
-                                  0)))
-                  
-            (local-time:timestamp- (local-time:timestamp- (chronicity:parse timestamp) minute-offset :minute)
-                                   hour-offset :hour)))))))
 
 
 (defclass rss-image ()
@@ -25,43 +10,9 @@
    (height :initarg :height :initform nil)
    (description :initarg :description :initform nil)))
 
-(defmethod print-object ((self rss-image) stream)
-  (print-unreadable-object (self stream :type t :identity t)
-    (format stream "~a" (slot-value self 'url))))
-
-(defmethod primary-value ((self rss-image))
-  (slot-value self 'url))
-
-(defun make-image (url title &optional link width height description)
-  (let ((link (or link url)))
-    (make-instance 'rss-image
-                   :url url
-                   :title title
-                   :link link
-                   :width width
-                   :height height
-                   :description description)))
-
 (defclass rss-category ()
   ((category :initarg :category :initform nil)
    (domain :initarg :domain :initform nil)))
-
-(defmethod print-object ((self rss-category) stream)
-  (print-unreadable-object (self stream :type t :identity t)
-    (format stream "~a~@[ ~a~]"
-            (slot-value self 'category)
-            (slot-value self 'domain))))
-
-(defmethod primary-value ((self rss-category))
-  (slot-value self 'category))
-
-(defun make-category (category &optional domain)
- (make-instance 'rss-category :category category :domain domain))
-
-(defun get-categories (doc tag)
-  ($ (inline doc) tag
-     (combine (text) (attr "domain"))
-     (map-apply #'make-category)))
 
 (define-data-class rss-feed (doc "channel") (feed)
   language copyright webmaster
@@ -87,6 +38,57 @@
   (categories "category" :value (get-categories doc "> category"))
   source comments enclosure )
 
+(defmethod print-object ((self rss-image) stream)
+  (print-unreadable-object (self stream :type t :identity t)
+    (format stream "~a" (slot-value self 'url))))
+
+(defmethod print-object ((self rss-category) stream)
+  (print-unreadable-object (self stream :type t :identity t)
+    (format stream "~a~@[ ~a~]"
+            (slot-value self 'category)
+            (slot-value self 'domain))))
+
+(defun get-date (str)
+  (handler-case
+    (local-time:parse-timestring str)
+    (local-time::invalid-timestring (c) (declare (ignore c))
+      (multiple-value-bind (res groups) (cl-ppcre:scan-to-strings "(.*)\s*([+-][0-9]{2,4})\s?$" str)
+        (let ((local-time:*default-timezone* local-time:+utc-zone+))
+          (let* ((timestamp (string-trim " " (if res (elt groups 0) str)))
+                 (hour-offset (if res (parse-integer (elt groups 1) :end 3) 0)) 
+                 (minute-offset (if (and res (> (length (elt groups 1)) 3))
+                                  (* (signum hour-offset) (parse-integer (elt groups 1) :start 3))
+                                  0)))
+            (let-each (:be *)
+              (chronicity:parse timestamp)
+              (local-time:timestamp- * minute-offset :minute)
+              (local-time:timestamp- * hour-offset   :hour))))))))
+
+
+(defmethod primary-value ((self rss-image))
+  (slot-value self 'url))
+
+(defun make-image (url title &optional link width height description)
+  (let ((link (or link url)))
+    (make-instance 'rss-image
+                   :url url
+                   :title title
+                   :link link
+                   :width width
+                   :height height
+                   :description description)))
+
+(defmethod primary-value ((self rss-category))
+  (slot-value self 'category))
+
+(defun make-category (category &optional domain)
+ (make-instance 'rss-category :category category :domain domain))
+
+(defun get-categories (doc tag)
+  ($ (inline doc) tag
+     (combine (text) (attr "domain"))
+     (map-apply #'make-category)))
+
 (defmethod %get-items (xml-dom (feed-type (eql :rss)))
   ($ (inline xml-dom) "channel > item"))
 
@@ -102,10 +104,7 @@
           (plump-dom:set-attribute
             ($ (inline (make-element "guid")) (text id) (node))
             "isPermaLink"
-            "false") 
-          ))
-
-      )))
+            "false"))))))
 
 (defmethod %generate-xml ((feed feed) (feed-type (eql :rss)) &rest r)
   (declare (ignore r))

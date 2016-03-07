@@ -6,16 +6,10 @@
    (label :initarg :label :initform nil)
    (scheme :initarg :scheme :initform nil)))
 
-(defun make-category (term &optional label scheme)
-  (make-instance 'atom-category :term term :label label :scheme scheme))
-
 (defclass atom-person ()
   ((name  :initarg :name  :type (or null string) :initform nil)
    (uri   :initarg :uri   :type (or null string) :initform nil)
    (email :initarg :email :type (or null string) :initform nil)))
-
-(defun make-person (name &optional uri email)
-  (make-instance 'atom-person :name name :uri uri :email email))
 
 (defclass atom-feed (alimenta:feed)
   ((subtitle   :initarg :subtitle                        :initform nil)
@@ -26,15 +20,21 @@
    (updated    :initarg :updated                         :initform nil)
    (authors    :initarg :authors    :type (or null list) :initform nil)))
 
-(defclass atom-item (alimenta:item)
-  ((author-uri :initarg :author-uri :initform nil)))
-
-(defmethod alimenta::%get-items (xml-dom (feed-type (eql :atom)))
-  ($ (inline xml-dom) "feed > entry"))
-
 (defclass alimenta::link ()
   ((alimenta::relation :initarg :rel)
    (alimenta::target   :initarg :target)))
+
+(defclass atom-item (alimenta:item)
+  ((author-uri :initarg :author-uri :initform nil)))
+
+(defun make-category (term &optional label scheme)
+  (make-instance 'atom-category :term term :label label :scheme scheme))
+
+(defun make-person (name &optional uri email)
+  (make-instance 'atom-person :name name :uri uri :email email))
+
+(defmethod alimenta::%get-items (xml-dom (feed-type (eql :atom)))
+  ($ (inline xml-dom) "feed > entry"))
 
 (defun get-link (xml)
   "This only handles alternate links"

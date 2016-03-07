@@ -6,7 +6,7 @@
 (defclass feed () 
   ((title :initarg :title :initform nil)
    (link :initarg :link :initform nil)
-   (items :initarg :items :initform nil)
+   (items :initarg :items :initform nil :accessor items)
    (description :initarg :description :initform nil)
    (feed-link :initarg :feed-link :initform nil)
    (doc :initarg :doc :initform nil)
@@ -19,7 +19,7 @@
    (date :initarg :date :initform nil)
    (link :initarg :link :initform nil)
    (links :initform (make-hash-table :test #'equalp))
-   (content :initarg :content :initform nil)
+   (content :initarg :content :initform nil :accessor content)
    (doc :initarg :doc :initform nil)))
 
 (defclass complex-value () ())

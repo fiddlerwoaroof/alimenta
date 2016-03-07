@@ -11,10 +11,13 @@
                #:anaphora
                #:chronicity
                #:fwoar.lisputils
+               #:split-sequence
                #:drakma)
   :serial t
   :components ((:file "package")
                (:file "alimenta")  
+               (:file "data-class")
+               (:file "date-handling")
                (:file "atom")  
                (:file "rss")  
                (:file "fetching")
