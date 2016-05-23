@@ -134,12 +134,11 @@
      (defconstants ,@constants)))
 
 (defmethod %generate-xml ((feed feed) (feed-type (eql :atom)) &key partial)
-  (let ((parent (or ($ (inline partial) "feed" (node))
+  (let ((feed-root (or ($1 (inline partial) "feed")
                     (plump:make-element (plump:make-root) "feed"))))
-    (prog1 parent
-      (let ((feed-root (make-element parent "feed")))
-        (with-slots (title id updated link feed-link description) feed
-          ($ (inline (make-element feed-root "title")) (text title)
+    (prog1 feed-root
+      (with-slots (title id updated link feed-link description) feed
+        ($ (inline (make-element feed-root "title")) (text title)
 
              (inline (make-element feed-root "link"))
              (attr "href" feed-link) (attr "rel" "self")
@@ -150,12 +149,13 @@
              (inline (make-element feed-root "id")) (text id) (node)
              (inline (make-element feed-root "summary")) (text description) (node)
              (inline (make-element feed-root "updated")) (text updated) (node)
-             ))))))
+             )))))
 
 
 (defmethod %generate-xml ((item item) (feed-type (eql :atom)) &key partial)
-  (let ((parent (or ($ (inline partial) "feed" (node))
-                    (plump:make-element (plump:make-root) "feed"))))
+  (let ((parent (if (string-equal (tag-name partial) "feed")
+                  partial
+                  (plump:make-element (plump:make-root) "feed"))))
     (prog1 parent
       (let ((item-root (make-element parent "entry")))
         (with-slots (title id date link content (author alimenta::author) author-uri) item

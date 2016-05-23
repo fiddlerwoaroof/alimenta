@@ -77,9 +77,27 @@
          (feed (alimenta.pull-feed::fetch-doc-from-url url)))
     (alimenta:to-feed feed :feed-link url)))
 
+(araneus:define-view feed-to-atom (feed)
+  `(200
+    (:content-type "application/xml+atom")
+    (,(concatenate 'string
+               "<?xml version=\"1.0\"?>"
+               (plump:serialize (alimenta:generate-xml feed :feed-type :atom)
+                   nil)))))
+
+(araneus:define-view feed-to-rss (feed)
+  `(200
+    (:content-type "application/xml+rss")
+    (,(concatenate 'string
+               "<?xml version=\"1.0\"?>"
+               (plump:serialize (alimenta:generate-xml feed :feed-type :rss)
+                   nil)))))
+
 (defvar *app* (make-instance 'ningle:<app>))
 
 (araneus:defroutes *app*
-  (("/") (araneus:as-route 'root)))
+  (("/") (araneus:as-route 'root))
+  (("/.rss") (araneus::compose-route (root) feed-to-rss)) 
+  (("/.atom") (araneus::compose-route (root) feed-to-atom)))
 
-(defvar *handler* (clack:clackup *app* :port 4939))
+(defvar *handler* (clack:clackup *app* :port 9090 ))
