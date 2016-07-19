@@ -1,3 +1,4 @@
+(in-package :cl-user)
 (ql:quickload :clack)
 (ql:quickload :ningle )
 (ql:quickload :araneus)
@@ -23,22 +24,39 @@
        :padding "1em")
 
     `(div.articles
-       :display "flex"
+       :display "block"
        :flex-flow "row"
        :flex-wrap "wrap-reverse"
        :align-items "baseline"
        :justify-content "space-around"
        :align-content "space-between"
+
        )
 
     `(article
        :padding "1em"
        :border "4px double #888"
        :vertical-align "middle"
-       :width "30%"
+       :width "100%"
        :overflow "hidden"
        :min-height "4em"
        :background "#aaa"
+
+       (div.title
+         :float "left"
+         :width "50%")
+
+       (a.link
+         :float "left"
+         :clear "left"
+         :width "50%")
+
+       (div.content
+         :margin-top "-3em"
+         :padding-right "5em"
+         :float "right"
+         :width "50%")
+
        )
     ))
 
@@ -73,7 +91,8 @@
                     do (araneus:view 'root item)))))))))
 
 (araneus:define-controller root (params)
-  (let* ((url "http://reddit.com/r/programming.rss")
+  (declare (optimize (debug 3)))
+  (let* ((url "http://reddit.com/r/prolog.rss")
          (feed (alimenta.pull-feed::fetch-doc-from-url url)))
     (alimenta:to-feed feed :feed-link url)))
 
@@ -82,7 +101,7 @@
     (:content-type "application/xml+atom")
     (,(concatenate 'string
                "<?xml version=\"1.0\"?>"
-               (plump:serialize (alimenta:generate-xml feed :feed-type :atom)
+               (plump:serialize (alimenta:generate-xml feed :atom)
                    nil)))))
 
 (araneus:define-view feed-to-rss (feed)
@@ -90,14 +109,14 @@
     (:content-type "application/xml+rss")
     (,(concatenate 'string
                "<?xml version=\"1.0\"?>"
-               (plump:serialize (alimenta:generate-xml feed :feed-type :rss)
+               (plump:serialize (alimenta:generate-xml feed :rss)
                    nil)))))
 
-(defvar *app* (make-instance 'ningle:<app>))
+(defparameter *app* (make-instance 'ningle:<app>))
 
 (araneus:defroutes *app*
   (("/") (araneus:as-route 'root))
   (("/.rss") (araneus::compose-route (root) feed-to-rss)) 
   (("/.atom") (araneus::compose-route (root) feed-to-atom)))
 
-(defvar *handler* (clack:clackup *app* :port 9090 ))
+(defparameter *handler* (clack:clackup *app* :port 9091 ))
