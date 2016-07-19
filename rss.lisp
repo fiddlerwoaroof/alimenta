@@ -49,6 +49,7 @@
             (slot-value self 'domain))))
 
 (defun get-date (str)
+  (declare (optimize (debug 3)))
   (handler-case
     (local-time:parse-timestring str)
     (local-time::invalid-timestring (c) (declare (ignore c))
@@ -59,10 +60,17 @@
                  (minute-offset (if (and res (> (length (elt groups 1)) 3))
                                   (* (signum hour-offset) (parse-integer (elt groups 1) :start 3))
                                   0)))
-            (let-each (:be *)
-              (chronicity:parse timestamp)
-              (local-time:timestamp- * minute-offset :minute)
-              (local-time:timestamp- * hour-offset   :hour))))))))
+            (loop
+              (restart-case (return
+                              (let-each (:be *)
+                                (chronicity:parse timestamp)
+                                (local-time:timestamp- * minute-offset :minute)
+                                (local-time:timestamp- * hour-offset   :hour)))       
+                (pop-token () (setf timestamp
+                                    (subseq timestamp
+                                            0
+                                            (position #\space timestamp
+                                                      :from-end t))))))))))))
 
 
 (defmethod primary-value ((self rss-image))
@@ -89,10 +97,10 @@
      (combine (text) (attr "domain"))
      (map-apply #'make-category)))
 
-(defmethod %get-items (xml-dom (feed-type (eql :rss)))
+(defmethod get-items (xml-dom (feed-type (eql :rss)))
   ($ (inline xml-dom) "channel > item"))
 
-(defmethod %generate-xml ((item item) (feed-type (eql :rss)) &key partial)
+(defmethod generate-xml ((item item) (feed-type (eql :rss)) &key partial)
   (prog1 partial
     (let ((item-root (make-element ($1 (inline partial) "channel") "item")))
       (flet ((make-element (tag) (make-element item-root tag)))
@@ -106,7 +114,7 @@
             "isPermaLink"
             "false"))))))
 
-(defmethod %generate-xml ((feed feed) (feed-type (eql :rss)) &rest r)
+(defmethod generate-xml ((feed feed) (feed-type (eql :rss)) &rest r)
   (declare (ignore r))
   (let* ((xml-root (plump:make-root))
          (feed-root (plump:make-element xml-root "rss"))
@@ -163,7 +171,7 @@
           (local-time:parse-timestring "2016-01-09T23:00:00.000000-0100")
           (get-date "Fri, 09 Jan 2016 21:30:00 -0230"))) 
 
-(defmethod %to-feed (xml-dom (type (eql :rss)) &key feed-link)
+(defmethod alimenta::-to-feed (xml-dom (type (eql :rss)) &key feed-link)
   ; TODO: store feed-link
   (flet ((get-channel-element (el)
            ($ (inline xml-dom) el (text) (node))))

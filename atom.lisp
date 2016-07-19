@@ -33,7 +33,7 @@
 (defun make-person (name &optional uri email)
   (make-instance 'atom-person :name name :uri uri :email email))
 
-(defmethod alimenta::%get-items (xml-dom (feed-type (eql :atom)))
+(defmethod alimenta::get-items (xml-dom (feed-type (eql :atom)))
   ($ (inline xml-dom) "feed > entry"))
 
 (defun get-link (xml)
@@ -64,7 +64,7 @@
          (content (with-output-to-string (s)
                     (awhen (or item-content item-description) (serialize  (parse it) s)))))
     (make-instance 'atom-item
-		   :doc xml-dom
+         :doc xml-dom
                    :content content
                    :date (local-time:parse-timestring item-date)
                    :id item-guid
@@ -81,9 +81,8 @@
                     ($ (inline author) "> uri" (text) (node))
                     ($ (inline author) "> email" (text) (node))))))
 
-(defmethod %to-feed (xml-dom (type (eql :atom)) &key feed-link)
-  (declare (ignore type) (ignorable feed-link))
-  ; TODO: store feed-link
+(defmethod alimenta::-to-feed (xml-dom (type (eql :atom)) &key feed-link)
+  (declare (ignore type))
   (flet ((get-feed-elem (selector) ($ (inline xml-dom) selector (text) (node)))
          (get-feed-elem-attr (selector attr) ($ (inline xml-dom) selector (attr attr) (node))))
     (let ((doc-title (get-feed-elem "feed > title"))
@@ -133,7 +132,7 @@
                       (continue c))))
      (defconstants ,@constants)))
 
-(defmethod %generate-xml ((feed feed) (feed-type (eql :atom)) &key partial)
+(defmethod generate-xml ((feed feed) (feed-type (eql :atom)) &key partial)
   (let ((feed-root (or ($1 (inline partial) "feed")
                     (plump:make-element (plump:make-root) "feed"))))
     (prog1 feed-root
@@ -152,7 +151,7 @@
              )))))
 
 
-(defmethod %generate-xml ((item item) (feed-type (eql :atom)) &key partial)
+(defmethod generate-xml ((item item) (feed-type (eql :atom)) &key partial)
   (let ((parent (if (string-equal (tag-name partial) "feed")
                   partial
                   (plump:make-element (plump:make-root) "feed"))))
@@ -244,7 +243,7 @@
 
 (deftest to-feed ()
   (let ((xml (parse +feed1+)))
-    (symbol-macrolet ((feed (alimenta::%to-feed xml :atom)))
+    (symbol-macrolet ((feed (alimenta::-to-feed xml :atom)))
       (should be equal +feed-title+ (slot-value feed 'alimenta:title))
       (should be equal +feed-link-website+ (slot-value feed 'alimenta:link))
       (should be equal +feed-link-self+ (slot-value feed 'alimenta:feed-link))
@@ -256,7 +255,7 @@
 
       (should be equal +feed-category-term+
               (slot-value
-                (elt 
+                (elt
                   (slot-value feed 'categories)
                   0)
                 'term))
@@ -297,7 +296,7 @@
 (deftest generate-xml ()
   (let* ((xml ($ (inline (parse +entry1+)) "entry" (node)))
          (item (alimenta::make-item xml :atom)))
-    (symbol-macrolet ((generated-xml (alimenta::%generate-xml item :atom)))
+    (symbol-macrolet ((generated-xml (alimenta::generate-xml item :atom)))
       (should be equal +title+
               ($ (inline generated-xml) "entry > title" (text) (node)))
       (should be equal +author+

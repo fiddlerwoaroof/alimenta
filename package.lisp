@@ -4,6 +4,9 @@
   (:use #:cl #:should-test #:lquery #:plump #:alexandria #:anaphora)
   (:export #:define-data-class))
 
+(defpackage #:alimenta2
+  (:use #:cl #:alexandria #:serapeam #:fw.lu #:should-test))
+
 (defpackage #:alimenta
   (:use #:cl #:should-test #:lquery #:plump #:alexandria #:anaphora)
   (:export #:to-feed #:generate-xml #:feed #:title #:link #:items #:feed-link

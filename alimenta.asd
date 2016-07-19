@@ -8,6 +8,7 @@
                #:lquery
                #:should-test
                #:alexandria
+               #:serapeum
                #:anaphora
                #:chronicity
                #:fwoar.lisputils
