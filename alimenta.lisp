@@ -117,6 +117,19 @@
             ((:feed) :atom)
             (t root-node-name)))))
 
+(defgeneric get-random-item (feed)
+  (:method ((feed feed))
+    (let* ((items (copy-seq (items feed)))
+           (num-items (length items)))
+      (elt items
+           (random num-items)))))
+
+(defgeneric get-latest-item (feed)
+  (:method ((feed feed))
+    (let ((items (copy-seq (items feed))))
+      (car (sort items
+                 #'local-time:timestamp>
+                 :key #'date)))))
 
 ;(defun generate-xml (feed &key (feed-type :rss))
 ;  (%generate-xml feed feed-type))

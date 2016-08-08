@@ -97,7 +97,7 @@
      (combine (text) (attr "domain"))
      (map-apply #'make-category)))
 
-(defmethod get-items (xml-dom (feed-type (eql :rss)))
+(defmethod alimenta::get-items (xml-dom (feed-type (eql :rss)))
   ($ (inline xml-dom) "channel > item"))
 
 (defmethod generate-xml ((item item) (feed-type (eql :rss)) &key partial)

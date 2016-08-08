@@ -5,13 +5,13 @@
   (:export #:define-data-class))
 
 (defpackage #:alimenta2
-  (:use #:cl #:alexandria #:serapeam #:fw.lu #:should-test))
+  (:use #:cl #:alexandria #:serapeum #:fw.lu #:should-test))
 
 (defpackage #:alimenta
   (:use #:cl #:should-test #:lquery #:plump #:alexandria #:anaphora)
   (:export #:to-feed #:generate-xml #:feed #:title #:link #:items #:feed-link
            #:doc #:source-type #:id #:date #:content #:item #:description
-           #:%generate-xml #:%to-feed #:%get-items #:make-item #:complex-value
+           #:%generate-xml #:%to-feed #:get-items #:make-item #:complex-value
            #:primary-value))
 
 (defpackage #:alimenta.rss
