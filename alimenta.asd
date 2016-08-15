@@ -4,18 +4,24 @@
   :description "A little library to discover, fetch, parse and generate RSS feeds"
   :author "Fiddlerwoaroof <fiddlerwoaroof@howit.is>"
   :license "MIT"
-  :depends-on (#:plump
-               #:lquery
-               #:should-test
-               #:alexandria
-               #:serapeum
+  :depends-on (#:alexandria
                #:anaphora
                #:chronicity
+               #:drakma
+               #:for
                #:fwoar.lisputils
-               #:split-sequence
-               #:drakma)
+               #:lquery
+               #:plump
+               #:serapeum
+               #:should-test
+               #:spinneret
+               #:split-sequence)
   :serial t
   :components ((:file "package")
+               (:file "collections")
+               (:file "collections-for")
+               #+sbcl (:file "collections-sbcl-iterators")
+
                (:file "alimenta")  
                (:file "data-class")
                (:file "date-handling")

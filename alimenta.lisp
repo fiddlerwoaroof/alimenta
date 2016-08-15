@@ -3,31 +3,64 @@
 
 (in-package #:alimenta)
 
+(defclass feed-entity ()
+  ((title :initarg :title :initform nil :accessor title)  
+   (link :initarg :link :initform nil :accessor link)
+   (doc :initarg :doc :initform nil :accessor doc)))
+
+(defgeneric belongs-to (feed-entity)
+  (:documentation "Returns the person responsible for this feed item"))
+
 (defgeneric -to-feed (doc type &key feed-link)
   (:documentation "Given an xml-document, return a feed object"))
+
+(defgeneric render (object renderer)
+  (:documentation "Given a lisp object representing a feed, return it rendered
+                   to the specified format"))
+
+(defgeneric render-feed (feed renderer)
+  (:documentation "Render the container for the feed's items. Return an object
+                   to which the items can be added via add-rendered-item"))
+
+(defgeneric render-item (item renderer)
+  (:documentation "Render an item to be added to a feed. Return an object that
+                   can be added to the container by add-rendered-item"))
+
+(defgeneric add-rendered-item (item-representation feed-representation renderer)
+  (:documentation "Add the rendered item to the rendered feed"))
 
 (defgeneric generate-xml (feed feed-type &key partial)
   (:documentation "Given a lisp object representing a feed, return an xml
                    document"))
 
-(defclass feed () 
-  ((description :initarg :description :initform nil :accessor description)
-   (doc :initarg :doc :initform nil :accessor doc)
-   (feed-link :initarg :feed-link :initform nil :accessor feed-link)
-   (items :initarg :items :initform nil :accessor items)
-   (link :initarg :link :initform nil :accessor link)
-   (source-type :initarg :source-type :initform nil :accessor source-type)
-   (title :initarg :title :initform nil :accessor title)))
-
-(defclass item ()
+(defclass item (feed-entity)
   ((author :initarg :author :initform nil :accessor author)
    (content :initarg :content :initform nil :accessor content)
    (date :initarg :date :initform nil :accessor date)
    (doc :initarg :doc :initform nil :accessor doc)
    (id :initarg :id :initform nil :accessor id)
-   (link :initarg :link :initform nil :accessor link)
-   (links :initform (make-hash-table :test #'equalp) :accessor links)
-   (title :initarg :title :initform nil :accessor title)))
+   (links :initform (make-hash-table :test #'equalp) :accessor links)))
+
+(collection-class:define-collection (feed item) (feed-entity) 
+  ((description :initarg :description :initform nil :accessor description)
+   (feed-link :initarg :feed-link :initform nil :accessor feed-link)
+   (source-type :initarg :source-type :initform nil :accessor source-type)))
+
+(defmethod render ((feed feed) renderer)
+  (let ((doc (render-feed feed renderer)))
+    (for:for ((item over feed))
+      (add-rendered-item (render-item item renderer) doc renderer))))
+
+(defmethod (setf feed-link) ((value string) (feed feed))
+  (setf (slot-value feed 'feed-link)
+        (puri:parse-uri value)))
+
+(defmethod initialize-instance :after ((feed feed) &key feed-link)
+  (when feed-link
+    (setf (feed-link feed) (puri:parse-uri feed-link))))
+
+(defmethod belongs-to ((item item))
+  (author item))
 
 (defclass complex-value () ())
 
@@ -56,11 +89,10 @@
   (:report (lambda (condition stream)
              (format stream "Item already has link ~s" (duplicate-link-type-old condition)))))
 
-
 (defmethod generate-xml :around ((feed feed) feed-type &rest r)
   (declare (ignore r))
   (let ((result (call-next-method feed feed-type)))
-    (with-slots (items) feed
+    (with-accessors ((items items)) feed
       (loop for item in items
             do (generate-xml item feed-type :partial result)))
     result))
@@ -72,10 +104,10 @@
     (with-slots (doc source-type) it
       (setf doc xml-dom
             source-type doc-type))
-    (with-slots (items) it
-      (setf
-        items (loop for item across (get-items xml-dom doc-type)
-                    collect (make-item item doc-type))))))
+    (setf
+      (items it)
+      (loop for item across (get-items xml-dom doc-type)
+            collect (make-item item doc-type)))))
 
 (defgeneric (setf link) (value self))
 (defmethod (setf link) ((value cons) (self item))
@@ -144,7 +176,7 @@
 
 
 ;(defun -get-items (feed xml-dom &key type)
-;  (with-slots (items) feed
+;  (with-accessors ((items items)) feed
 ;    (loop for item across (get-items xml-dom type)
 ;          do (push (make-item xml-dom type) items)
 ;          finally (return items)))) 
@@ -173,17 +205,17 @@
     (subseq link 0 (min 30 (length link)))))
 
 (defmethod push-item ((feed feed) (item item))
-  (push item (slot-value feed 'items)))
+  (push item
+        (items feed)))
 
 (deftest push-item ()
   (let ((feed (make-instance 'feed))
         (item (make-instance 'item)))
-    (with-slots (items) feed
+    (with-accessors ((items items)) feed
       ;(should signal error (push-item feed 2))
       (should be eql item
               (progn
                 (push-item feed item)
                 (car items))))))
-
 
 ;; vim: set foldmethod=marker:

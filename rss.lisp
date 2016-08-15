@@ -48,30 +48,72 @@
             (slot-value self 'category)
             (slot-value self 'domain))))
 
+(defmacro check ((test &body body))
+  `(let ((val (progn ,@body)))
+     (when (,test val)
+       val)))
+
+(defun all-alpha (str)
+  (check-type str string)
+  (loop for char across str
+        always (alpha-char-p char)))
+
+
+(defun extract-date-timezone (date-str)
+  (declare (optimize (debug 3)))
+  (let ((tz-inited nil))
+    (flet ((init-tz ()
+             (unless tz-inited
+               (local-time:reread-timezone-repository)
+               (setf tz-inited t))))
+
+      (macrolet ((ensure-tz-inited (&body body)
+                   `(progn (init-tz)
+                           ,@body)))
+        (let* ((last-space (position #\space date-str :from-end t))
+               (tz-name (check (all-alpha (subseq date-str (1+ last-space)))))
+               (timestamp-raw (if tz-name
+                                (subseq date-str 0 last-space)
+                                date-str)))
+          (values (if tz-name
+                    (ensure-tz-inited
+                      (local-time:find-timezone-by-location-name
+                        (string-upcase tz-name)))
+                    local-time:+utc-zone+)
+                  timestamp-raw))))))
+
 (defun get-date (str)
   (declare (optimize (debug 3)))
   (handler-case
     (local-time:parse-timestring str)
     (local-time::invalid-timestring (c) (declare (ignore c))
-      (multiple-value-bind (res groups) (cl-ppcre:scan-to-strings "(.*)\s*([+-][0-9]{2,4})\s?$" str)
-        (let ((local-time:*default-timezone* local-time:+utc-zone+))
-          (let* ((timestamp (string-trim " " (if res (elt groups 0) str)))
-                 (hour-offset (if res (parse-integer (elt groups 1) :end 3) 0)) 
-                 (minute-offset (if (and res (> (length (elt groups 1)) 3))
-                                  (* (signum hour-offset) (parse-integer (elt groups 1) :start 3))
-                                  0)))
-            (loop
-              (restart-case (return
-                              (let-each (:be *)
-                                (chronicity:parse timestamp)
-                                (local-time:timestamp- * minute-offset :minute)
-                                (local-time:timestamp- * hour-offset   :hour)))       
-                (pop-token () (setf timestamp
-                                    (subseq timestamp
-                                            0
-                                            (position #\space timestamp
-                                                      :from-end t))))))))))))
+      (multiple-value-bind (local-time:*default-timezone* timestamp-raw) (extract-date-timezone str)
+        (multiple-value-bind (res groups) (cl-ppcre:scan-to-strings "(.*)\s*([+-][0-9]{2,4})\s?$" timestamp-raw)
+          (let ((ts (if res (elt groups 0) timestamp-raw))
+                (tz-offset (if res (elt groups 1) "0000")))
+            (let* ((timestamp (string-trim " " ts))
+                   ; Handle numeric timzones like -0430 or +0320
+                   (hour-offset (parse-integer tz-offset :end 3))
+                   (minute-offset (if (> (length tz-offset) 3)
+                                    (* (signum hour-offset)
+                                       (parse-integer tz-offset :start 3))
+                                    0)))
 
+              (loop
+                (restart-case (return
+                                (let-each (:be *)
+                                  (chronicity:parse timestamp)
+                                  (local-time:timestamp- * minute-offset :minute)
+                                  (local-time:timestamp- * hour-offset   :hour)))       
+                  (pop-token () (setf timestamp
+                                      (subseq timestamp
+                                              0
+                                              (position #\space timestamp
+                                                        :from-end t)))))))))))))
+
+(defun pop-token ()
+  (when-let ((restart (find-restart 'pop-token)))
+    (invoke-restart restart)))
 
 (defmethod primary-value ((self rss-image))
   (slot-value self 'url))
@@ -180,7 +222,7 @@
            (doc-link (get-channel-element "channel > link"))
            (doc-description (get-channel-element "channel > description"))
            (doc-feed-link (or feed-link
-                              ($ "feed > atom::link[rel=self]" (attr "href") (node)))))
+                              ($ "channel > atom::link[rel=self]" (attr "href") (node)))))
       (make-instance 'rss-feed
         :title doc-title
         :link doc-link

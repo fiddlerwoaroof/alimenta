@@ -9,9 +9,22 @@
                     drakma:*text-content-types*)))
      ,@body))
 
+(defvar *user-agent* "alimenta/0.0")
+
+(defun call-with-user-agent (user-agent cb &rest args)
+  (let ((*user-agent* user-agent))
+    (apply cb args)))
+
+(defun let-bind-special-var-macro-body (var value body)
+  `(let ((,var ,value))
+     ,@body))
+
+(defmacro with-user-agent ((user-agent) &body body)
+  (let-bind-special-var-macro-body '*user-agent* user-agent body))
+
 (defun fetch-doc-from-url (url)
   (setup-libraries-for-feeds 
-    (plump:parse (drakma:http-request url))))
+    (plump:parse (drakma:http-request url :user-agent *user-agent*))))
 
 (define-condition fetch-error () ())
 (define-condition feed-ambiguous (fetch-error) ((choices :initarg :choices :initform nil)))
@@ -26,7 +39,7 @@
 
 (defun fetch-feed-from-url (url &key type)
   (setup-libraries-for-feeds
-    (let* ((feeds (alimenta.discover:discover-feed (drakma:http-request url)))
+    (let* ((feeds (alimenta.discover:discover-feed (drakma:http-request url :user-agent *user-agent*)))
            (feeds (if type (remove-if-not (lambda (x) (eql type (car x))) feeds) feeds)))
       (if (not feeds) (no-feed url)
         (fetch-doc-from-url

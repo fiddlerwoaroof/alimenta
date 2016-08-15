@@ -2,30 +2,30 @@
 (in-package :alimenta.atom)
 
 (defclass atom-category ()
-  ((term :initarg :term :initform nil)
-   (label :initarg :label :initform nil)
-   (scheme :initarg :scheme :initform nil)))
+  ((term :initarg :term :initform nil :accessor term)
+   (label :initarg :label :initform nil :accessor label)
+   (scheme :initarg :scheme :initform nil :accessor scheme)))
 
 (defclass atom-person ()
-  ((name  :initarg :name  :type (or null string) :initform nil)
-   (uri   :initarg :uri   :type (or null string) :initform nil)
-   (email :initarg :email :type (or null string) :initform nil)))
+  ((name  :initarg :name  :type (or null string) :initform nil :accessor name)
+   (uri   :initarg :uri   :type (or null string) :initform nil :accessor uri )
+   (email :initarg :email :type (or null string) :initform nil :accessor email)))
 
 (defclass atom-feed (alimenta:feed)
-  ((subtitle   :initarg :subtitle                        :initform nil)
-   (id         :initarg :id                              :initform nil)
-   (icon       :initarg :icon                            :initform nil)
-   (categories :initarg :categories :type (or null list) :initform nil)
-   (logo       :initarg :logo                            :initform nil)
-   (updated    :initarg :updated                         :initform nil)
-   (authors    :initarg :authors    :type (or null list) :initform nil)))
+  ((subtitle   :initarg :subtitle                        :initform nil :accessor subtitle)
+   (id         :initarg :id                              :initform nil :accessor id)
+   (icon       :initarg :icon                            :initform nil :accessor icon)
+   (categories :initarg :categories :type (or null list) :initform nil :accessor categories)
+   (logo       :initarg :logo                            :initform nil :accessor logo)
+   (updated    :initarg :updated                         :initform nil :accessor updated)
+   (authors    :initarg :authors    :type (or null list) :initform nil :accessor authors)))
 
 (defclass alimenta::link ()
   ((alimenta::relation :initarg :rel)
    (alimenta::target   :initarg :target)))
 
 (defclass atom-item (alimenta:item)
-  ((author-uri :initarg :author-uri :initform nil)))
+  ((author-uri :initarg :author-uri :initform nil :accessor author-uri)))
 
 (defun make-category (term &optional label scheme)
   (make-instance 'atom-category :term term :label label :scheme scheme))
@@ -136,19 +136,20 @@
   (let ((feed-root (or ($1 (inline partial) "feed")
                     (plump:make-element (plump:make-root) "feed"))))
     (prog1 feed-root
-      (with-slots (title id updated link feed-link description) feed
+      (with-accessors ((title title) (id id) (updated updated) (link link)
+                       (feed-link feed-link) (description description)) feed
         ($ (inline (make-element feed-root "title")) (text title)
 
-             (inline (make-element feed-root "link"))
-             (attr "href" feed-link) (attr "rel" "self")
+           (inline (make-element feed-root "link"))
+           (attr "href" feed-link) (attr "rel" "self")
 
-             (inline (make-element feed-root "link"))
-             (attr "href" link) (attr "rel" "alternate") (attr "type" "text/html")
+           (inline (make-element feed-root "link"))
+           (attr "href" link) (attr "rel" "alternate") (attr "type" "text/html")
 
-             (inline (make-element feed-root "id")) (text id) (node)
-             (inline (make-element feed-root "summary")) (text description) (node)
-             (inline (make-element feed-root "updated")) (text updated) (node)
-             )))))
+           (inline (make-element feed-root "id")) (text id) (node)
+           (inline (make-element feed-root "summary")) (text description) (node)
+           (inline (make-element feed-root "updated")) (text updated) (node)
+           )))))
 
 
 (defmethod generate-xml ((item item) (feed-type (eql :atom)) &key partial)
@@ -157,7 +158,8 @@
                   (plump:make-element (plump:make-root) "feed"))))
     (prog1 parent
       (let ((item-root (make-element parent "entry")))
-        (with-slots (title id date link content (author alimenta::author) author-uri) item
+        (with-accessors ((title title) (id id) (date date) (link link)
+                         (content content) (author author) (author-uri author-uri)) item
           ($ (inline (make-element item-root "title")) (text title)
              (inline (make-element item-root "link")) (attr "href" link)
              (inline (make-element item-root "id")) (text id) (node)

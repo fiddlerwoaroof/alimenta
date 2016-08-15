@@ -1,5 +1,9 @@
 ;;;; package.lisp
 
+(defpackage #:collection-class
+  (:use #:cl #:alexandria #:serapeum)
+  (:export collection value-error push-item define-collection random-item nth-item items))
+
 (defpackage #:data-class
   (:use #:cl #:should-test #:lquery #:plump #:alexandria #:anaphora)
   (:export #:define-data-class))
@@ -8,11 +12,16 @@
   (:use #:cl #:alexandria #:serapeum #:fw.lu #:should-test))
 
 (defpackage #:alimenta
-  (:use #:cl #:should-test #:lquery #:plump #:alexandria #:anaphora)
+  (:use #:cl #:should-test #:lquery #:plump #:alexandria #:anaphora #:collection-class)
   (:export #:to-feed #:generate-xml #:feed #:title #:link #:items #:feed-link
            #:doc #:source-type #:id #:date #:content #:item #:description
            #:%generate-xml #:%to-feed #:get-items #:make-item #:complex-value
-           #:primary-value))
+           #:primary-value #:render #:author))
+
+(defpackage #:alimenta.html
+  (:use #:cl #:should-test #:lquery #:alexandria #:anaphora #:alimenta #:data-class
+        #:fwoar.lisputils)
+  (:export #:html-renderer))
 
 (defpackage #:alimenta.rss
   (:use #:cl #:should-test #:lquery #:plump #:alexandria #:anaphora #:alimenta #:data-class
