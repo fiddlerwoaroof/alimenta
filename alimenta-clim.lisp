@@ -54,8 +54,7 @@
           (format pane "~a <~a>~%"
                   (alimenta::title item)
                   (alimenta::link item)))))
-    (let ((text (funcall (compose #'plump:text #'plump:parse)
-                         (alimenta::content item))))
+    (let ((text (alimenta::content item)))
       (format pane "~&~{~{~a~^ ~}~^~%~}~2&"
               (remove-if #'null
                          (mapcar #'tokens
