@@ -68,12 +68,23 @@
 (define-alimenta-command (com-quite :name t) ()
   (clim:frame-exit clim:*application-frame*))
 
-(define-alimenta-command (to-feed :name t) ()
-  (let ((pane (clim:find-pane-named clim:*application-frame* 'app)))
-    (setf (clim:stream-default-view pane) *feed-view*)))
+(defmacro with-interactor ((interactor-symbol) &body body)
+  `(let ((,interactor-symbol (clim:find-pane-named clim:*application-frame* 'int)))
+     ,@body))
 
-(define-alimenta-command (com-pick-item :name t) ((item 'alimenta:item))
+(define-alimenta-command (to-feed :name t) ()
+  (let ((int (clim:find-pane-named clim:*application-frame* 'int))
+        (app (clim:find-pane-named clim:*application-frame* 'app)))
+    (format int "~&Switching to the feed view~%")
+    (setf (clim:stream-default-view app) *feed-view*)))
+
+(define-alimenta-command (com-pick-item :name t) ((item 'alimenta:item :gesture :select))
   (let ((pane (clim:find-pane-named clim:*application-frame* 'app)))
+    (with-interactor (int)
+      (format int "~&Switching to the item: ")
+      (clim:with-output-as-presentation (int item 'alimenta:item)
+        (format int "~a" (alimenta:title item)))
+      (terpri int))
     (setf (clim:stream-default-view pane) (make-instance 'item-view :item item))))
 
 (define-alimenta-command (flop-layout :name t) ()
