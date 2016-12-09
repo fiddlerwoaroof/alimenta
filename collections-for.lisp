@@ -1,3 +1,5 @@
+(in-package :collection-class)
+
 (defmethod for:has-more ((iterator collection-iterator))
   (not (null (for:object iterator))))
 
