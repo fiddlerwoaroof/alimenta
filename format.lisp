@@ -1,19 +1,17 @@
 (defpackage :alimenta.format
-  (:use :cl :alexandria :serapeum :fw.lu))
+  (:use :cl :alexandria :serapeum :fw.lu)
+  (:export format-document format-title format-link format-paragraph))
 (in-package :alimenta.format)
 
 (defclass document-formatter ()
   ())
 
-(defclass indent-formatter (document-formatter)
-  ((%level :initarg :level :accessor level :initform 0)))
-
-(defclass html-formatter (document-formatter)
-  ((%level :initarg :level :accessor level :initform 0)))
-
+;;; Formatting protocol
+;; Generic entrypoint
 (defgeneric format-document (formatter stream document)
   (:documentation "Format a document with the given formatter to the given stream"))
 
+;; Semantic formatters
 (defgeneric format-title (formatter title)
   (:documentation "Format a title according to FORMATTER"))
 
@@ -23,24 +21,7 @@
 (defgeneric format-paragraph (formatter paragraph)
   (:documentation "Format a paragraph according to FORMATTER"))
 
-(defmethod format-title ((formatter indent-formatter) (title string))
-  (format nil "+ Title: ~a" title))
-
-(defmethod format-title ((formatter html-formatter) (title string))
-  (format nil "<h~d>~a~2:*</h~d>" (1+ (level formatter)) title))
-
-(defmethod format-link ((formatter indent-formatter) (link string))
-  (format nil "  Link: ~a" link))
-
-(defmethod format-link ((formatter html-formatter) (link string))
-  (format nil "<a href=\"~a\">~:*~a</a>" link))
-
-(defmethod format-paragraph ((formatter indent-formatter) (paragraph list))
-  (format nil "~{  ~a~}" paragraph))
-
-(defmethod format-paragraph ((formatter html-formatter) (paragraph list))
-  (format nil "~%~{<p>~a</p>~}" paragraph))
-
+;;; Make alimenta's classes formattable
 
 (defmethod format-document (formatter stream (document alimenta::feed-entity))
   (format stream "~&~v,4@t~a~%~v,4@t~a~%"
@@ -55,11 +36,38 @@
     (format stream "~&~v,4@t~a~2&"
 	    (level formatter) (format-paragraph formatter (map 'list #'identity paragraphs)))))
 
+
+;;; Define some output formats
+
+(defclass indent-formatter (document-formatter)
+  ((%level :initarg :level :accessor level :initform 0)))
+
+(defmethod format-title ((formatter indent-formatter) (title string))
+  (format nil "+ Title: ~a" title))
+
+(defmethod format-link ((formatter indent-formatter) (link string))
+  (format nil "  Link: ~a" link))
+
+(defmethod format-paragraph ((formatter indent-formatter) (paragraph list))
+  (format nil "~{  ~a~}" paragraph))
+
 (defmethod format-document ((formatter indent-formatter) stream (document alimenta:feed))
   (call-next-method)
   (incf (level formatter))
   (for:for ((item over document))
     (format-document formatter stream item)))
+
+(defclass html-formatter (document-formatter)
+  ((%level :initarg :level :accessor level :initform 0)))
+
+(defmethod format-title ((formatter html-formatter) (title string))
+  (format nil "<h~d>~a~2:*</h~d>" (1+ (level formatter)) title))
+
+(defmethod format-link ((formatter html-formatter) (link string))
+  (format nil "<a href=\"~a\">~:*~a</a>" link))
+
+(defmethod format-paragraph ((formatter html-formatter) (paragraph list))
+  (format nil "~%~{<p>~a</p>~}" paragraph))
 
 (defmethod format-document ((formatter html-formatter) stream (document alimenta:feed))
   (let ((ostream (or stream (make-string-output-stream))))
