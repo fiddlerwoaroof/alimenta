@@ -3,6 +3,7 @@
 
 (defmacro setup-libraries-for-feeds (&body body)
   `(let ((plump:*tag-dispatchers* plump:*xml-tags*)
+	 (drakma:*drakma-default-external-format* :utf-8)
          (drakma:*text-content-types* 
            (pairlis '("application" "application")
                     '("atom+xml"    "rss+xml")
@@ -39,8 +40,10 @@
 
 (defun fetch-feed-from-url (url &key type)
   (setup-libraries-for-feeds
-    (let* ((feeds (alimenta.discover:discover-feed (drakma:http-request url :user-agent *user-agent*)))
-           (feeds (if type (remove-if-not (lambda (x) (eql type (car x))) feeds) feeds)))
+    (let* ((feeds (alimenta.discover:discover-feed (drakma:http-request url
+									:user-agent *user-agent*
+									:decode-content t)))
+	   (feeds (if type (remove-if-not (lambda (x) (eql type (car x))) feeds) feeds)))
       (if (not feeds) (no-feed url)
         (fetch-doc-from-url
           (cdar 

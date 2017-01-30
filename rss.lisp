@@ -1,7 +1,6 @@
 (declaim (optimize (speed 0) (safety 3) (debug 3)))
 (in-package :alimenta.rss)
 
-
 (defclass rss-image ()
   ((url :initarg :url :initform nil)
    (title :initarg :title :initform nil)
@@ -11,8 +10,8 @@
    (description :initarg :description :initform nil)))
 
 (defclass rss-category ()
-  ((category :initarg :category :initform nil)
-   (domain :initarg :domain :initform nil)))
+  ((category :initarg :category :accessor category :initform nil)
+   (domain :initarg :domain :accessor domain :initform nil)))
 
 (define-data-class rss-feed (doc "channel") (feed)
   language copyright webmaster
@@ -36,7 +35,7 @@
 
 (define-data-class rss-item (doc "") (item)
   (categories "category" :value (get-categories doc "> category"))
-  source comments enclosure )
+  source comments enclosure description)
 
 (defmethod print-object ((self rss-image) stream)
   (print-unreadable-object (self stream :type t :identity t)
@@ -57,7 +56,6 @@
   (check-type str string)
   (loop for char across str
         always (alpha-char-p char)))
-
 
 (defun extract-date-timezone (date-str)
   (declare (optimize (debug 3)))
@@ -178,6 +176,15 @@
          (attr "type" "application/rss+xml")
          (attr "href" link)))
     xml-root))
+
+(defmethod content-el ((entity rss-item))
+  (fw.lu:let-each (:be *)
+    (doc entity)
+    ($1 (inline *)
+	(combine "> content::encoded"
+		 "> description"))
+    (or (elt (car *) 0)
+	(elt (cadr *) 0))))
 
 (defmethod make-item (xml-dom (type (eql :rss)))
   (let* ((*lquery-master-document* xml-dom)

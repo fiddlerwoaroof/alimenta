@@ -117,10 +117,10 @@
   (list*
     'progn
     (loop for (name value &optional doc) in constants
-        collect `(defconstant ,name ,value ,doc))))
+        collect `(defconstant ,name ,value ,@(when doc (list doc))))))
 
 (defvar *defconstants-really-verbose* nil)
-(defmacro defconstants-really (&body constants)
+#+sbcl (defmacro defconstants-really (&body constants)
   "auto-invoke the continue restart . . ."
   `(handler-bind ((sb-ext:defconstant-uneql
                     (lambda (c)
@@ -131,6 +131,9 @@
                                 (sb-ext:defconstant-uneql-new-value c)))
                       (continue c))))
      (defconstants ,@constants)))
+
+#-sbcl (defmacro defconstants-really (&body constants)
+	 `(defconstants ,@constants))
 
 (defmethod generate-xml ((feed feed) (feed-type (eql :atom)) &key partial)
   (let ((feed-root (or ($1 (inline partial) "feed")

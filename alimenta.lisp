@@ -1,5 +1,5 @@
 ;;;; alimenta.lisp
-(declaim (optimize (speed 0) (safety 3) (debug 4)))
+(declaim (optimize (speed 0) (safety 3) (debug 3)))
 
 (in-package #:alimenta)
 
@@ -33,11 +33,13 @@
   (:documentation "Given a lisp object representing a feed, return an xml
                    document"))
 
+(defgeneric content-el (entity)
+  (:documentation "Return the element that contains the item's content"))
+
 (defclass item (feed-entity)
   ((author :initarg :author :initform nil :accessor author)
    (content :initarg :content :initform nil :accessor content)
    (date :initarg :date :initform nil :accessor date)
-   (doc :initarg :doc :initform nil :accessor doc)
    (id :initarg :id :initform nil :accessor id)
    (links :initform (make-hash-table :test #'equalp) :accessor links)))
 
@@ -97,6 +99,16 @@
             do (generate-xml item feed-type :partial result)))
     result))
 
+(defmethod -to-feed ((doc stream) doc-type &key feed-link)
+  (-to-feed (plump:parse doc)
+	    doc-type
+	    :feed-link feed-link))
+
+(defmethod -to-feed ((doc string) doc-type &key feed-link)
+  (-to-feed (plump:parse doc)
+	    doc-type
+	    :feed-link feed-link))
+    
 (defmethod -to-feed :around ((xml-dom plump:node) doc-type &key feed-link)
   "This wraps the particular methods so that _they_ don't have to implement
    item fetching.  NIL passed to the type activates auto-detection"
@@ -144,10 +156,9 @@
   (let ((root-node-name (make-keyword (string-upcase
                                         ($ (inline xml-dom) (children)
                                            (map #'tag-name) (node))))))
-    (setf type
-          (case root-node-name
-            ((:feed) :atom)
-            (t root-node-name)))))
+    (case root-node-name
+      ((:feed) :atom)
+      (t root-node-name))))
 
 (defgeneric get-random-item (feed)
   (:method ((feed feed))

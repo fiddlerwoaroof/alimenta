@@ -10,6 +10,7 @@
                #:drakma
                #:for
                #:fwoar.lisputils
+	       #:collection-class
                #:lquery
                #:plump
                #:serapeum
@@ -18,9 +19,9 @@
                #:split-sequence)
   :serial t
   :components ((:file "package")
-               (:file "collections")
-               (:file "collections-for")
-               #+sbcl (:file "collections-sbcl-iterators")
+               ;; (:file "collections")
+               ;; (:file "collections-for")
+               ;; #+sbcl (:file "collections-sbcl-iterators")
 
                (:file "alimenta")  
                (:file "data-class")

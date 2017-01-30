@@ -16,7 +16,7 @@
   (:export #:to-feed #:generate-xml #:feed #:title #:link #:items #:feed-link
            #:doc #:source-type #:id #:date #:content #:item #:description
            #:%generate-xml #:%to-feed #:get-items #:make-item #:complex-value
-           #:primary-value #:render #:author))
+           #:primary-value #:render #:author #:content-el))
 
 (defpackage #:alimenta.html
   (:use #:cl #:should-test #:lquery #:alexandria #:anaphora #:alimenta #:data-class
@@ -29,7 +29,7 @@
   (:export #:language #:copyright #:managing-editor #:webmaster
            #:publication-date #:last-build-date #:categories #:generator #:docs
            #:cloud #:ttl #:image #:rating #:text-input #:skip-hours #:skip-days
-           #:rss-feed #:rss-item))
+           #:rss-feed #:rss-item #:category #:domain))
 
 (defpackage #:alimenta.atom
   (:use #:cl #:should-test #:lquery #:plump #:alexandria #:anaphora #:alimenta))
