@@ -30,11 +30,13 @@
 
 (defmethod format-document (formatter stream (document alimenta:item))
   (call-next-method)
-  (let ((paragraphs (lquery:$ (initialize (alimenta:content document))
-			      (children)
-			      (text))))
-    (format stream "~&~v,4@t~a~2&"
-	    (level formatter) (format-paragraph formatter (map 'list #'identity paragraphs)))))
+  (let ((paragraphs (remove-if (op (every #'whitespacep _))
+			       (lquery:$ (initialize (alimenta:content document))
+					 (children)
+					 (text)))))
+    (format stream "~&~{~a~%~}~2&"
+	    (map 'list (op (format-paragraph formatter _))
+		 paragraphs))))
 
 
 ;;; Define some output formats
@@ -48,8 +50,11 @@
 (defmethod format-link ((formatter indent-formatter) (link string))
   (format nil "  Link: ~a" link))
 
+(defmethod format-paragraph ((formatter indent-formatter) (paragraph string))
+  (format nil "~&~v,4@t  ~a~%" (level formatter) paragraph))
+
 (defmethod format-paragraph ((formatter indent-formatter) (paragraph list))
-  (format nil "~{  ~a~}" paragraph))
+  (format nil "~&~{  ~a~%~}" paragraph))
 
 (defmethod format-document ((formatter indent-formatter) stream (document alimenta:feed))
   (call-next-method)
@@ -66,13 +71,16 @@
 (defmethod format-link ((formatter html-formatter) (link string))
   (format nil "<a href=\"~a\">~:*~a</a>" link))
 
+(defmethod format-paragraph ((formatter html-formatter) (paragraph string))
+  (format nil "~&<p>~a</p>" paragraph))
+
 (defmethod format-paragraph ((formatter html-formatter) (paragraph list))
   (format nil "~%~{<p>~a</p>~}" paragraph))
 
 (defmethod format-document ((formatter html-formatter) stream (document alimenta:feed))
   (let ((ostream (or stream (make-string-output-stream))))
     (unwind-protect
-	 (progn (format ostream "~&<html><head></head><body><main>~%")
+	 (progn (format ostream "~&<html><head><style>main{max-width:40em;margin-left:20em}h1,h2{margin-left:-3em}</style></head><body><main>~%")
 		(call-next-method formatter ostream document)
 		(incf (level formatter))
 		(for:for ((item over document))
