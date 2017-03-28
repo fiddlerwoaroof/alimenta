@@ -144,15 +144,15 @@
   (prog1 partial
     (let ((item-root (make-element ($1 (inline partial) "channel") "item")))
       (flet ((make-element (tag) (make-element item-root tag)))
-        (with-slots (title id date link content) item
-          ($ (inline (make-element "title")) (text title)
-            (inline (make-element "link")) (text link)
-            (inline (make-element "pubDate")) (text date)
-            (inline (make-element "description")) (text content))    
-          (plump-dom:set-attribute
-            ($ (inline (make-element "guid")) (text id) (node))
-            "isPermaLink"
-            "false"))))))
+	(with-slots (title id date link content) item
+	  ($ (inline (make-element "title")) (text title)
+	     (inline (make-element "link")) (text link)
+	     (inline (make-element "pubDate")) (text date)
+	     (inline (make-element "description")) (text content))    
+	  (plump-dom:set-attribute
+	   ($ (inline (make-element "guid")) (text id) (node))
+	   "isPermaLink"
+	   "false"))))))
 
 (defmethod generate-xml ((feed feed) (feed-type (eql :rss)) &rest r)
   (declare (ignore r))

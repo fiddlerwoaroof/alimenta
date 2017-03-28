@@ -11,8 +11,14 @@
 (defgeneric belongs-to (feed-entity)
   (:documentation "Returns the person responsible for this feed item"))
 
+(define-condition feed-type-unsupported (error)
+  ((%type :initarg :type :reader feed-type)
+   (%feed-link :initarg :feed-link :reader feed-link)))
+
 (defgeneric -to-feed (doc type &key feed-link)
-  (:documentation "Given an xml-document, return a feed object"))
+  (:documentation "Given an xml-document, return a feed object")
+  (:method (doc type &key feed-link)
+    (error 'feed-type-unsupported :type type :feed-link feed-link)))
 
 (defgeneric render (object renderer)
   (:documentation "Given a lisp object representing a feed, return it rendered
@@ -210,6 +216,12 @@
       (setf id (funcall next-id it)))
     (push-item feed it)
     (values feed it)))
+
+(defun filter-feed (feed function &key key)
+  (setf (items feed)
+	(remove-if-not function (items feed)
+		       :key key))
+  feed)
 
 (defun shorten-link (link)
   (let ((link (cl-ppcre:regex-replace "^https?:" link "")))

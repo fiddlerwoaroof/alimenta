@@ -13,10 +13,11 @@
 
 (defpackage #:alimenta
   (:use #:cl #:should-test #:lquery #:plump #:alexandria #:anaphora #:collection-class)
-  (:export #:to-feed #:generate-xml #:feed #:title #:link #:items #:feed-link
+  (:export #:to-feed #:generate-xml #:feed #:title #:link #:items #:feed-link #:feed-type
            #:doc #:source-type #:id #:date #:content #:item #:description
            #:%generate-xml #:%to-feed #:get-items #:make-item #:complex-value
-           #:primary-value #:render #:author #:content-el))
+           #:primary-value #:render #:author #:content-el #:feed-type-unsupported
+	   #:pop-token #:filter-feed))
 
 (defpackage #:alimenta.html
   (:use #:cl #:should-test #:lquery #:alexandria #:anaphora #:alimenta #:data-class
@@ -41,7 +42,8 @@
 (defpackage #:alimenta.pull-feed 
   (:use #:cl #:alimenta #:alexandria #:anaphora #:lquery)
   (:export #:pull-feed #:fetch-doc-from-url #:fetch-feed-from-url
-           #:fetch-error #:feed-ambiguous #:no-feed)) 
+           #:fetch-error #:feed-ambiguous #:no-feed #:with-user-agent
+	   #:skip-feed)) 
 
 (defmethod asdf:perform ((o asdf:test-op) (s (eql (asdf:find-system :alimenta))))
   (asdf:load-system :alimenta)
