@@ -54,7 +54,7 @@
           (format pane "~a <~a>~%"
                   (alimenta::title item)
                   (alimenta::link item)))))
-    (let ((text (alimenta::content item)))
+    (let ((text (plump:text (plump:parse (alimenta::content item)))))
       (format pane "~&~{~{~a~^ ~}~^~%~}~2&"
               (remove-if #'null
                          (mapcar #'tokens
@@ -71,6 +71,13 @@
 (defmacro with-interactor ((interactor-symbol) &body body)
   `(let ((,interactor-symbol (clim:find-pane-named clim:*application-frame* 'int)))
      ,@body))
+
+(define-alimenta-command (open-feed :name t) ((url string))
+  (let ((int (clim:find-pane-named clim:*application-frame* 'int))
+        (app (clim:find-pane-named clim:*application-frame* 'app)))
+    (setf *articles* (alimenta.pull-feed:pull-feed url :detect t))
+    (format int "~&Switching to the feed view~%")
+    (setf (clim:stream-default-view app) *feed-view*)))
 
 (define-alimenta-command (to-feed :name t) ()
   (let ((int (clim:find-pane-named clim:*application-frame* 'int))
@@ -94,5 +101,7 @@
             ('default  'flopped)
             (t 'default)))))
 
+#|
 (clim:run-frame-top-level
   (clim:make-application-frame 'alimenta-clim::alimenta))
+|#
