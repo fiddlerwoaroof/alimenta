@@ -37,6 +37,10 @@
   (categories "category" :value (get-categories doc "> category"))
   source comments enclosure description)
 
+;; TODO: finish the stuff necessary for rss->atom
+(defmethod id ((object rss-feed))
+  (feed-link object))
+
 (defmethod print-object ((self rss-image) stream)
   (print-unreadable-object (self stream :type t :identity t)
     (format stream "~a" (slot-value self 'url))))

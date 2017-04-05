@@ -25,15 +25,8 @@
 
 (defun fetch-doc-from-url (url)
   (setup-libraries-for-feeds
-    (loop
-       (restart-case (let ((data (drakma:http-request url :user-agent *user-agent*)))
-		       (setup-libraries-for-feeds 
-			 (return (plump:parse data))))
-	 (retry ()
-	   :report (lambda (s) (format s "Retry fetching the feed ~a" url)) )
-	 (skip-feed ()
-	   (return)
-	   :report (lambda (s) (format s "Skip fetching the url ~a" url)))))))
+    (let ((data (drakma:http-request url :user-agent *user-agent*)))
+      (plump:parse data))))
 
 (define-condition fetch-error (error) ())
 (define-condition feed-ambiguous (fetch-error) ((choices :initarg :choices :initform nil)))
@@ -74,9 +67,18 @@
 		:report (lambda (s) (format s "Provide a function to select the right feed"))
 		(find-if selector feeds)))))))))
 
+(defmacro with-retry ((retry-message &rest args) action &body other-restarts)
+  `(loop (restart-case (return ,action)
+	   (retry ()
+	     :report (lambda (s) (format s ,retry-message ,@args)))
+	   ,@other-restarts)))
+
 (defun pull-feed (url &key detect type)
-  (to-feed
-   (if detect
-       (fetch-feed-from-url url)
-       (fetch-doc-from-url url)) 
-   :type type))
+  (with-retry ("Retry fetching feed ~a" url)
+      (to-feed
+       (if detect
+	   (fetch-feed-from-url url)
+	   (fetch-doc-from-url url)) 
+       :type type)
+    (skip-feed () (return)
+	       :report (lambda (s) (format s "Skip fetching feed ~a" url)))))
