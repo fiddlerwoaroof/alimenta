@@ -17,7 +17,7 @@
            #:doc #:source-type #:id #:date #:content #:item #:description
            #:%generate-xml #:%to-feed #:get-items #:make-item #:complex-value
            #:primary-value #:render #:author #:content-el #:feed-type-unsupported
-	   #:pop-token #:filter-feed))
+	   #:pop-token #:filter-feed #:feed-entity))
 
 (defpackage #:alimenta.html
   (:use #:cl #:should-test #:lquery #:alexandria #:anaphora #:alimenta #:data-class
