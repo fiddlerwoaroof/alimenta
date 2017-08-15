@@ -1,5 +1,5 @@
 ;;;; alimenta.lisp
-(declaim (optimize (speed 0) (safety 3) (debug 3)))
+;; (declaim (optimize (speed 0) (safety 3) (debug 3)))
 
 (in-package #:alimenta)
 
@@ -102,19 +102,19 @@
   (let ((result (call-next-method feed feed-type)))
     (with-accessors ((items items)) feed
       (loop for item in items
-            do (generate-xml item feed-type :partial result)))
+         do (generate-xml item feed-type :partial result)))
     result))
 
 (defmethod -to-feed ((doc stream) doc-type &key feed-link)
   (-to-feed (plump:parse doc)
-	    doc-type
-	    :feed-link feed-link))
+            doc-type
+            :feed-link feed-link))
 
 (defmethod -to-feed ((doc string) doc-type &key feed-link)
   (-to-feed (plump:parse doc)
-	    doc-type
-	    :feed-link feed-link))
-    
+            doc-type
+            :feed-link feed-link))
+
 (defmethod -to-feed :around ((xml-dom plump:node) doc-type &key feed-link)
   "This wraps the particular methods so that _they_ don't have to implement
    item fetching.  NIL passed to the type activates auto-detection"
@@ -123,9 +123,9 @@
       (setf doc xml-dom
             source-type doc-type))
     (setf
-      (items it)
-      (loop for item across (get-items xml-dom doc-type)
-            collect (make-item item doc-type)))))
+     (items it)
+     (loop for item across (get-items xml-dom doc-type)
+        collect (make-item item doc-type)))))
 
 (defgeneric (setf link) (value self))
 (defmethod (setf link) ((value cons) (self item))
@@ -133,8 +133,8 @@
     (destructuring-bind (type . href) value
       (when (consp href)
         (if (null (cdr href))
-          (setf href (car href))
-          (error 'type-error "too many arguments")))
+            (setf href (car href))
+            (error 'type-error "too many arguments")))
       (let ((type-keyword (make-keyword (string-upcase type))))
         (when (slot-boundp self 'links)
           (multiple-value-bind (old-link old-link-p) (gethash type-keyword links) 
@@ -160,8 +160,8 @@
 
 (defun detect-feed-type (xml-dom)
   (let ((root-node-name (make-keyword (string-upcase
-                                        ($ (inline xml-dom) (children)
-                                           (map #'tag-name) (node))))))
+                                       ($ (inline xml-dom) (children)
+                                          (map #'tag-name) (node))))))
     (case root-node-name
       ((:feed) :atom)
       (t root-node-name))))
@@ -180,8 +180,8 @@
                  #'local-time:timestamp>
                  :key #'date)))))
 
-;(defun generate-xml (feed &key (feed-type :rss))
-;  (%generate-xml feed feed-type))
+                                        ;(defun generate-xml (feed &key (feed-type :rss))
+                                        ;  (%generate-xml feed feed-type))
 
 (defun to-feed (doc &key type feed-link)
   "Makes an instance of feed from the given document.  Specialize to-feed with
@@ -192,11 +192,11 @@
   (-to-feed doc type :feed-link feed-link))
 
 
-;(defun -get-items (feed xml-dom &key type)
-;  (with-accessors ((items items)) feed
-;    (loop for item across (get-items xml-dom type)
-;          do (push (make-item xml-dom type) items)
-;          finally (return items)))) 
+                                        ;(defun -get-items (feed xml-dom &key type)
+                                        ;  (with-accessors ((items items)) feed
+                                        ;    (loop for item across (get-items xml-dom type)
+                                        ;          do (push (make-item xml-dom type) items)
+                                        ;          finally (return items)))) 
 
 (defun make-feed (&key title link items feed-link description)
   (make-instance 'feed
@@ -219,9 +219,34 @@
 
 (defun filter-feed (feed function &key key)
   (setf (items feed)
-	(remove-if-not function (items feed)
-		       :key key))
+        (remove-if-not function (items feed)
+                       :key key))
   feed)
+
+(defgeneric transform (item transform)
+  (:documentation "transform a feed entity by TRANSFORM: the
+function will be called with either a feed or a item as an arguments
+and, if called upon a feed, it'll automatically be mapped across the
+feed's items after being called on the feed. We do not use the results
+of this mapping directly, however any modifications to an item mutate
+the original.")
+
+  (:method :around (item transform)
+    (call-next-method)
+    item)
+
+  (:method ((feed feed-entity) transform)
+    (funcall transform feed))
+
+  (:method :after ((feed feed) transform)
+    (map nil (lambda (it)
+                 (transform it transform))
+         (items feed))))
+
+(defun transform-content (item function)
+  (setf (content item)
+        (funcall function
+                 (content item))))
 
 (defun shorten-link (link)
   (let ((link (cl-ppcre:regex-replace "^https?:" link "")))
@@ -232,13 +257,13 @@
         (items feed)))
 
 (deftest push-item ()
-  (let ((feed (make-instance 'feed))
-        (item (make-instance 'item)))
-    (with-accessors ((items items)) feed
-      ;(should signal error (push-item feed 2))
-      (should be eql item
-              (progn
-                (push-item feed item)
-                (car items))))))
+    (let ((feed (make-instance 'feed))
+          (item (make-instance 'item)))
+      (with-accessors ((items items)) feed
+                                        ;(should signal error (push-item feed 2))
+        (should be eql item
+                (progn
+                  (push-item feed item)
+                  (car items))))))
 
 ;; vim: set foldmethod=marker:
