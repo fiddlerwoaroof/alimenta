@@ -1,4 +1,4 @@
-;;;; alimenta.lisp
+;;;; alimenta.lisp -*- tab-width: 8; -*-
 ;; (declaim (optimize (speed 0) (safety 3) (debug 3)))
 
 (in-package #:alimenta)

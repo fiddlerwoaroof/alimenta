@@ -1,6 +1,7 @@
 ;;;; alimenta.asd
+(in-package :asdf-user)
 
-(asdf:defsystem #:alimenta
+(defsystem #:alimenta
   :description "A little library to discover, fetch, parse and generate RSS feeds"
   :author "Fiddlerwoaroof <fiddlerwoaroof@howit.is>"
   :license "MIT"
@@ -10,7 +11,7 @@
                #:drakma
                #:for
                #:fwoar.lisputils
-	       #:collection-class
+               #:collection-class
                #:lquery
                #:plump
                #:serapeum
@@ -19,10 +20,6 @@
                #:split-sequence)
   :serial t
   :components ((:file "package")
-               ;; (:file "collections")
-               ;; (:file "collections-for")
-               ;; #+sbcl (:file "collections-sbcl-iterators")
-
                (:file "alimenta")  
                (:file "data-class")
                (:file "date-handling")
@@ -30,6 +27,18 @@
                (:file "rss")  
                (:file "fetching")
                (:file "discovery")))
+
+(defsystem :alimenta+patmatch 
+  :description ""
+  :author "Ed L <edward@elangley.org>"
+  :license "MIT"
+  :depends-on (#:alexandria
+               #:uiop
+               #:serapeum
+               #:alimenta
+               #:fwoar.lisputils)
+  :serial t
+  :components ((:file "pattern-matcher")))
 
 
 ;; vim: set ft=lisp:
