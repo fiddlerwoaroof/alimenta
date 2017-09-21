@@ -30,3 +30,17 @@
       `((,val-sym ,form)
         ,@binders))))
 
+(defmethod handle-pattern append ((pattern item) form &rest args)
+  (let ((key->reader '((:author . author)
+                       (:content . content)
+                       (:date . date)
+                       (:id . id)
+                       (:links . links))))
+    (let* ((val-sym (gensym "VAL"))
+           (binders (loop for (key binding) on args by #'cddr
+                       for accessor = (cdr (assoc key key->reader))
+                       when accessor append
+                         `((,binding (,accessor ,val-sym))))))
+      `((,val-sym ,form)
+        ,@binders))))
+
