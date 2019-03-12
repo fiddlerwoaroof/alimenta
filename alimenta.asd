@@ -10,7 +10,7 @@
                #:chronicity
                #:drakma
                #:for
-               #:fwoar.lisputils
+               #:fwoar-lisputils
                #:collection-class
                #:lquery
                #:plump
@@ -23,12 +23,13 @@
                (:file "alimenta")  
                (:file "data-class")
                (:file "date-handling")
+               (:file "render-protocol")
                (:file "atom")  
                (:file "rss")  
                (:file "fetching")
                (:file "discovery")))
 
-(defsystem :alimenta+patmatch 
+(defsystem :alimenta/patmatch 
   :description ""
   :author "Ed L <edward@elangley.org>"
   :license "MIT"
@@ -36,7 +37,7 @@
                #:uiop
                #:serapeum
                #:alimenta
-               #:fwoar.lisputils)
+               #:fwoar-lisputils)
   :serial t
   :components ((:file "pattern-matcher")))
 

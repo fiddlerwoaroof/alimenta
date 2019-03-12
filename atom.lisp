@@ -5,6 +5,8 @@
   ((term :initarg :term :initform nil :accessor term)
    (label :initarg :label :initform nil :accessor label)
    (scheme :initarg :scheme :initform nil :accessor scheme)))
+(defmethod print-object ((o atom-category) s)
+  (format s "#.(~s ~s ~s ~s)" 'make-category (term o) (label o) (scheme o)))
 
 (defclass atom-person ()
   ((name  :initarg :name  :type (or null string) :initform nil :accessor name)
@@ -25,7 +27,8 @@
    (alimenta::target   :initarg :target)))
 
 (defclass atom-item (alimenta:item)
-  ((author-uri :initarg :author-uri :initform nil :accessor author-uri)))
+  ((author-uri :initarg :author-uri :initform nil :accessor author-uri)
+   (categories :initarg :categories :type (or null list) :initform nil :accessor categories)))
 
 (defun make-category (term &optional label scheme)
   (make-instance 'atom-category :term term :label label :scheme scheme))
@@ -60,17 +63,21 @@
          (item-content ($ "> content" (text) (node)))
          (item-author ($ "> author > name" (text) (node)))
          (item-author-uri ($ "> author > uri" (text) (node)))
+         (item-categories ($ (inline xml-dom) "> category"
+                            (combine (attr "term") (attr "label") (attr "scheme"))
+                            (map-apply #'make-category)))
          (*tag-dispatchers* *html-tags*)
          (content (with-output-to-string (s)
                     (awhen (or item-content item-description) (serialize  (parse it) s)))))
     (make-instance 'atom-item
-         :doc xml-dom
+                   :doc xml-dom
                    :content content
                    :date (local-time:parse-timestring item-date)
                    :id item-guid
                    :author item-author
                    :author-uri item-author-uri
                    :link item-link
+                   :categories (coerce item-categories 'list)
                    :title item-title)))
 
 (defun get-authors (xml-dom)

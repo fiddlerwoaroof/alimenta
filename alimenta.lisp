@@ -24,17 +24,6 @@
   (:documentation "Given a lisp object representing a feed, return it rendered
                    to the specified format"))
 
-(defgeneric render-feed (feed renderer)
-  (:documentation "Render the container for the feed's items. Return an object
-                   to which the items can be added via add-rendered-item"))
-
-(defgeneric render-item (item renderer)
-  (:documentation "Render an item to be added to a feed. Return an object that
-                   can be added to the container by add-rendered-item"))
-
-(defgeneric add-rendered-item (item-representation feed-representation renderer)
-  (:documentation "Add the rendered item to the rendered feed"))
-
 (defgeneric generate-xml (feed feed-type &key partial)
   (:documentation "Given a lisp object representing a feed, return an xml
                    document"))
@@ -55,9 +44,13 @@
    (source-type :initarg :source-type :initform nil :accessor source-type)))
 
 (defmethod render ((feed feed) renderer)
-  (let ((doc (render-feed feed renderer)))
+  (let ((doc (alimenta.render:render-feed feed renderer)))
     (for:for ((item over feed))
-      (add-rendered-item (render-item item renderer) doc renderer))))
+      (setf doc
+            (alimenta.render:add-rendered-item doc
+                                               (alimenta.render:render-item item feed renderer)
+                                               renderer)))
+    doc))
 
 (defmethod (setf feed-link) ((value string) (feed feed))
   (setf (slot-value feed 'feed-link)
@@ -180,8 +173,8 @@
                  #'local-time:timestamp>
                  :key #'date)))))
 
-                                        ;(defun generate-xml (feed &key (feed-type :rss))
-                                        ;  (%generate-xml feed feed-type))
+;;(defun generate-xml (feed &key (feed-type :rss))
+;;  (%generate-xml feed feed-type))
 
 (defun to-feed (doc &key type feed-link)
   "Makes an instance of feed from the given document.  Specialize to-feed with
@@ -192,11 +185,11 @@
   (-to-feed doc type :feed-link feed-link))
 
 
-                                        ;(defun -get-items (feed xml-dom &key type)
-                                        ;  (with-accessors ((items items)) feed
-                                        ;    (loop for item across (get-items xml-dom type)
-                                        ;          do (push (make-item xml-dom type) items)
-                                        ;          finally (return items)))) 
+;;(defun -get-items (feed xml-dom &key type)
+;;  (with-accessors ((items items)) feed
+;;    (loop for item across (get-items xml-dom type)
+;;          do (push (make-item xml-dom type) items)
+;;          finally (return items)))) 
 
 (defun make-feed (&key title link items feed-link description)
   (make-instance 'feed
@@ -232,16 +225,16 @@ of this mapping directly, however any modifications to an item mutate
 the original.")
 
   (:method :around (item transform)
-    (call-next-method)
-    item)
+           (call-next-method)
+           item)
 
   (:method ((feed feed-entity) transform)
     (funcall transform feed))
 
   (:method :after ((feed feed) transform)
-    (map nil (lambda (it)
-                 (transform it transform))
-         (items feed))))
+           (map nil (lambda (it)
+                      (transform it transform))
+                (items feed))))
 
 (defun transform-content (item function)
   (setf (content item)
@@ -257,13 +250,13 @@ the original.")
         (items feed)))
 
 (deftest push-item ()
-    (let ((feed (make-instance 'feed))
-          (item (make-instance 'item)))
-      (with-accessors ((items items)) feed
-                                        ;(should signal error (push-item feed 2))
-        (should be eql item
-                (progn
-                  (push-item feed item)
-                  (car items))))))
+  (let ((feed (make-instance 'feed))
+        (item (make-instance 'item)))
+    (with-accessors ((items items)) feed
+      ;;(should signal error (push-item feed 2))
+      (should be eql item
+              (progn
+                (push-item feed item)
+                (car items))))))
 
 ;; vim: set foldmethod=marker:

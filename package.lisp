@@ -4,6 +4,10 @@
   (:use #:cl #:alexandria #:serapeum)
   (:export collection value-error push-item define-collection random-item nth-item items))
 
+(defpackage :alimenta.render
+  (:use :cl )
+  (:export #:render-feed #:render-item #:add-rendered-item))
+
 (defpackage #:data-class
   (:use #:cl #:should-test #:lquery #:plump #:alexandria #:anaphora)
   (:export #:define-data-class))

@@ -28,18 +28,18 @@
   (:panes
    (feeds :application
           :height 400
-          ;; :width 100
+          :width 300
           :display-function 'display-app
           :default-view (clim:with-application-frame (frame)
                           (feed-list frame)))
    (items :application
           :height 400
-          ;; :width  200
+          :width  600
           :display-function #'display-app
           :default-view *feed-view*)
    (articles :application
              :height 400
-             ;; :width 300
+             :width  600
              :display-function 'display-app
              )
    (int :interactor
@@ -158,14 +158,13 @@
             (t 'default)))))
 
 
+
 (defun main ()
   (clim:run-frame-top-level
    (clim:make-application-frame 'alimenta-clim::alimenta
                                 :feed-list
                                 (make-instance 'feed-list
-                                               :feeds (list (make-instance 'feed-url
-                                                                           :uri
-                                                                           "http://thomism.wordpress.com/feed")
-                                                            (make-instance 'feed-url
-                                                                           :uri
-                                                                           "http://planet.lisp.org/rss20.xml"))))))
+                                               :feeds (list 
+                                                       (make-instance 'feed-url
+                                                                      :uri
+                                                                      "http://planet.lisp.org/rss20.xml"))))))
