@@ -73,6 +73,7 @@
                    :doc xml-dom
                    :content content
                    :date (local-time:parse-timestring item-date)
+                   :description item-description
                    :id item-guid
                    :author item-author
                    :author-uri item-author-uri

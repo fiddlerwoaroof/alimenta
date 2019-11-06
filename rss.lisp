@@ -22,8 +22,8 @@
                                              (plump:text (elt x 0))))
                                (let ((plump:*tag-dispatchers* plump:*xml-tags*))
                                  ($1 (inline doc) "channel > image"
-                                     (combine "url" "title" "link" "width" "height"
-                                              "description")))))) 
+                                   (combine "url" "title" "link" "width" "height"
+                                            "description"))))))
 
   (categories "category" :value (get-categories doc  "channel > category"))
   (text-input "textInput")
@@ -225,7 +225,7 @@
           (get-date "Fri, 09 Jan 2016 21:30:00 -0230"))) 
 
 (defmethod alimenta::-to-feed (xml-dom (type (eql :rss)) &key feed-link)
-  ; TODO: store feed-link
+  ;; TODO: store feed-link
   (flet ((get-channel-element (el)
            ($ (inline xml-dom) el (text) (node))))
     (let* ((*lquery-master-document* xml-dom)
@@ -235,8 +235,8 @@
            (doc-feed-link (or feed-link
                               ($ "channel > atom::link[rel=self]" (attr "href") (node)))))
       (make-instance 'rss-feed
-        :title doc-title
-        :link doc-link
-        :description doc-description
-        :feed-link doc-feed-link))))
+                     :title doc-title
+                     :link doc-link
+                     :description doc-description
+                     :feed-link doc-feed-link))))
 

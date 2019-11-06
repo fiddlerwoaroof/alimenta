@@ -34,6 +34,7 @@
 (defclass item (feed-entity)
   ((author :initarg :author :initform nil :accessor author)
    (content :initarg :content :initform nil :accessor content)
+   (description :initarg :description :accessor description)
    (date :initarg :date :initform nil :accessor date)
    (id :initarg :id :initform nil :accessor id)
    (links :initform (make-hash-table :test #'equalp) :accessor links)))
