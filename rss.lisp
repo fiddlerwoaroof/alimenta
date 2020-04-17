@@ -27,10 +27,10 @@
 
   (categories "category" :value (get-categories doc  "channel > category"))
   (text-input "textInput")
-  (managing-editor "managingEditor") 
+  (managing-editor "managingEditor")
   (skip-days "skipDays")
-  (skip-hours "skipHours") 
-  (publication-date "publicationDate" :transform get-date) 
+  (skip-hours "skipHours")
+  (publication-date "publicationDate" :transform get-date)
   (last-build-date "lastBuildDate" :transform get-date))
 
 (define-data-class rss-item (doc "") (item)
@@ -106,7 +106,7 @@
                                 (let-each (:be *)
                                   (chronicity:parse timestamp)
                                   (local-time:timestamp- * minute-offset :minute)
-                                  (local-time:timestamp- * hour-offset   :hour)))       
+                                  (local-time:timestamp- * hour-offset   :hour)))
                   (pop-token () (setf timestamp
                                       (subseq timestamp
                                               0
@@ -152,7 +152,7 @@
 	  ($ (inline (make-element "title")) (text title)
 	     (inline (make-element "link")) (text link)
 	     (inline (make-element "pubDate")) (text date)
-	     (inline (make-element "description")) (text content))    
+	     (inline (make-element "description")) (text content))
 	  (plump-dom:set-attribute
 	   ($ (inline (make-element "guid")) (text id) (node))
 	   "isPermaLink"
@@ -203,7 +203,7 @@
                       (serialize (parse (or item-content-encoded item-description)) s))))
          (*tag-dispatchers* *html-tags*))
     (make-instance 'rss-item
-                   :content content   
+                   :content content
                    :date item-date
                    :doc xml-dom
                    :id item-guid
@@ -219,10 +219,10 @@
           (get-date "Fri, 09 Jan 2016 23:00:00 -0100"))
   (should be local-time:timestamp=
           (local-time:parse-timestring "2016-01-09T23:00:00.000000-0100")
-          (get-date "Fri, 09 Jan 2016 22:00:00 -0200"))  
+          (get-date "Fri, 09 Jan 2016 22:00:00 -0200"))
   (should be local-time:timestamp=
           (local-time:parse-timestring "2016-01-09T23:00:00.000000-0100")
-          (get-date "Fri, 09 Jan 2016 21:30:00 -0230"))) 
+          (get-date "Fri, 09 Jan 2016 21:30:00 -0230")))
 
 (defmethod alimenta::-to-feed (xml-dom (type (eql :rss)) &key feed-link)
   ;; TODO: store feed-link
@@ -239,4 +239,3 @@
                      :link doc-link
                      :description doc-description
                      :feed-link doc-feed-link))))
-

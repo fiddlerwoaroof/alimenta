@@ -322,7 +322,7 @@
               ($ (inline generated-xml) "entry > content" (text) (node)))
       (should be equal +link+
               ($ (inline generated-xml) "entry > link" (attr "href") (node)))
-      ; TODO: deal with dates . . .
+      ;; TODO: deal with dates . . .
       )))
 
 (defun do-test (&optional (test nil))

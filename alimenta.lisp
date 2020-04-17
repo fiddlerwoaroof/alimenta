@@ -4,7 +4,7 @@
 (in-package #:alimenta)
 
 (defclass feed-entity ()
-  ((title :initarg :title :initform nil :accessor title)  
+  ((title :initarg :title :initform nil :accessor title)
    (link :initarg :link :initform nil :accessor link)
    (doc :initarg :doc :initform nil :accessor doc)))
 
@@ -39,7 +39,7 @@
    (id :initarg :id :initform nil :accessor id)
    (links :initform (make-hash-table :test #'equalp) :accessor links)))
 
-(collection-class:define-collection (feed item) (feed-entity) 
+(collection-class:define-collection (feed item) (feed-entity)
   ((description :initarg :description :initform nil :accessor description)
    (feed-link :initarg :feed-link :initform nil :accessor feed-link)
    (source-type :initarg :source-type :initform nil :accessor source-type)))
@@ -131,7 +131,7 @@
             (error 'type-error "too many arguments")))
       (let ((type-keyword (make-keyword (string-upcase type))))
         (when (slot-boundp self 'links)
-          (multiple-value-bind (old-link old-link-p) (gethash type-keyword links) 
+          (multiple-value-bind (old-link old-link-p) (gethash type-keyword links)
             (when old-link-p
               (cerror "Replace Link ~a:~a with ~a:~a" 'duplicate-link-type :old old-link :new href))))
         (setf (gethash type-keyword links) href)))))
@@ -190,7 +190,7 @@
 ;;  (with-accessors ((items items)) feed
 ;;    (loop for item across (get-items xml-dom type)
 ;;          do (push (make-item xml-dom type) items)
-;;          finally (return items)))) 
+;;          finally (return items))))
 
 (defun make-feed (&key title link items feed-link description)
   (make-instance 'feed

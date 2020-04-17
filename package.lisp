@@ -44,11 +44,11 @@
   (:use #:cl #:alimenta #:alexandria #:anaphora #:lquery)
   (:export #:discover-feed))
 
-(defpackage #:alimenta.pull-feed 
+(defpackage #:alimenta.pull-feed
   (:use #:cl #:alimenta #:alexandria #:anaphora #:lquery)
   (:export #:pull-feed #:fetch-doc-from-url #:fetch-feed-from-url
            #:fetch-error #:feed-ambiguous #:no-feed #:with-user-agent
-	   #:skip-feed)) 
+	   #:skip-feed))
 
 (defmethod asdf:perform ((o asdf:test-op) (s (eql (asdf:find-system :alimenta))))
   (asdf:load-system :alimenta)

@@ -35,13 +35,12 @@
 (defgeneric slot-tags (self))
 
 (defun process-slots-for-data-class (slots)
-  (mapcar
-    (fw.lu::destructuring-lambda ((slot tag . rest))
-      (let ((tag (etypecase tag
-                   (symbol (string-downcase tag))
-                   (string tag))))
-        (list* slot (make-keyword slot) tag rest)))
-    (fw.lu:ensure-mapping slots)))
+  (mapcar (fw.lu::destructuring-lambda ((slot tag . rest))
+            (let ((tag (etypecase tag
+                         (symbol (string-downcase tag))
+                         (string tag))))
+              (list* slot (make-keyword slot) tag rest)))
+          (fw.lu:ensure-mapping slots)))
 
 (deftest process-slots-for-data-class ()
   (let ((tc-1 '(a))
@@ -78,7 +77,3 @@
          (defmethod %all-slots ((self ,name) format)
            (pairlis (list ,@(mapcar (fw.lu::alambda (cadr it)) slots))
                     (list ,@(loop for (slot) in slots collect `(,slot self)))))))))
-
-
-
-
