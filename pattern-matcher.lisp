@@ -7,7 +7,8 @@
 (defmethod handle-pattern append ((pattern feed-entity) form &rest args)
   (let ((key->reader '((:title . title)
                        (:link . link)
-                       (:doc . doc))))
+                       (:doc . doc)
+                       (:items . items ))))
     (let* ((val-sym (gensym "VAL"))
            (binders (loop for (key binding) on args by #'cddr
                           for accessor = (cdr (assoc key key->reader))
