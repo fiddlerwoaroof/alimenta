@@ -13,7 +13,7 @@
   (:export #:define-data-class))
 
 (defpackage #:alimenta2
-  (:use #:cl #:alexandria #:serapeum #:fw.lu #:should-test))
+  (:use #:cl #:alexandria #:serapeum #:should-test))
 
 (defpackage #:alimenta
   (:use #:cl #:should-test #:lquery #:plump #:alexandria #:anaphora #:collection-class)
@@ -25,13 +25,11 @@
            #:transform))
 
 (defpackage #:alimenta.html
-  (:use #:cl #:should-test #:lquery #:alexandria #:anaphora #:alimenta #:data-class
-        #:fwoar.lisputils)
+  (:use #:cl)
   (:export #:html-renderer))
 
 (defpackage #:alimenta.rss
-  (:use #:cl #:should-test #:lquery #:plump #:alexandria #:anaphora #:alimenta #:data-class
-        #:fwoar.lisputils)
+  (:use #:cl #:should-test #:lquery #:plump #:alexandria #:anaphora #:alimenta #:data-class)
   (:export #:language #:copyright #:managing-editor #:webmaster
            #:publication-date #:last-build-date #:categories #:generator #:docs
            #:cloud #:ttl #:image #:rating #:text-input #:skip-hours #:skip-days
