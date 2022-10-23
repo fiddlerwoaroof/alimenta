@@ -10,9 +10,9 @@
                        (:doc . doc))))
     (let* ((val-sym (gensym "VAL"))
            (binders (loop for (key binding) on args by #'cddr
-                       for accessor = (cdr (assoc key key->reader))
-                       when accessor append
-                         `((,binding (,accessor ,val-sym))))))
+                          for accessor = (cdr (assoc key key->reader))
+                          when accessor append
+                            `((,binding (,accessor ,val-sym))))))
       `((,val-sym ,form)
         ,@binders))))
 
@@ -43,4 +43,3 @@
                          `((,binding (,accessor ,val-sym))))))
       `((,val-sym ,form)
         ,@binders))))
-

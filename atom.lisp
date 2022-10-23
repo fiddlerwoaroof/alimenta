@@ -99,26 +99,27 @@
           (doc-icon (get-feed-elem "feed > icon"))
           (doc-logo (get-feed-elem "feed > logo"))
           (doc-id (get-feed-elem "feed > id"))
-          (doc-updated (awhen (get-feed-elem "feed > updated") (local-time:parse-timestring it)))
+          (doc-updated (awhen (get-feed-elem "feed > updated")
+                         (local-time:parse-timestring it)))
           (doc-link (get-feed-elem-attr "feed > link[rel=alternate]" "href"))
           (doc-feed-link (or feed-link (get-feed-elem-attr "feed > link[rel=self]" "href")))
           (doc-categories ($ (inline xml-dom) "feed > category"
-                             (combine (attr "term") (attr "label") (attr "scheme"))
-                             (map-apply #'make-category)))
+                            (combine (attr "term") (attr "label") (attr "scheme"))
+                            (map-apply #'make-category)))
           (doc-authors (get-authors xml-dom)))
       (make-instance 'atom-feed
-        :title doc-title
-        :description doc-summary
-        :icon doc-icon
-        :logo doc-logo
-        :link doc-link
-        :updated doc-updated
-        :id doc-id
-        :feed-link doc-feed-link
-        :subtitle doc-subtitle
-        :categories (coerce doc-categories 'list)
-        :authors doc-authors
-        ))))
+                     :title doc-title
+                     :description doc-summary
+                     :icon doc-icon
+                     :logo doc-logo
+                     :link doc-link
+                     :updated doc-updated
+                     :id doc-id
+                     :feed-link doc-feed-link
+                     :subtitle doc-subtitle
+                     :categories (coerce doc-categories 'list)
+                     :authors doc-authors
+                     ))))
 ;}}}
 
 (defmacro defconstants (&body constants)

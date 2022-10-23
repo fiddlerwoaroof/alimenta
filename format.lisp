@@ -25,18 +25,18 @@
 
 (defmethod format-document (formatter stream (document alimenta::feed-entity))
   (format stream "~&~v,4@t~a~%~v,4@t~a~%"
-	  (level formatter) (format-title formatter (alimenta:title document))
-	  (level formatter) (format-link formatter (alimenta:link document))))
+          (level formatter) (format-title formatter (alimenta:title document))
+          (level formatter) (format-link formatter (alimenta:link document))))
 
 (defmethod format-document (formatter stream (document alimenta:item))
   (call-next-method)
   (let ((paragraphs (remove-if (op (every #'whitespacep _))
-			       (lquery:$ (initialize (alimenta:content document))
-					 (children)
-					 (text)))))
+                               (lquery:$ (initialize (alimenta:content document))
+                                 (children)
+                                 (text)))))
     (format stream "~&~{~a~%~}~2&"
-	    (map 'list (op (format-paragraph formatter _))
-		 paragraphs))))
+            (map 'list (op (format-paragraph formatter _))
+                 paragraphs))))
 
 
 ;;; Define some output formats
@@ -80,15 +80,15 @@
 (defmethod format-document ((formatter html-formatter) stream (document alimenta:feed))
   (let ((ostream (or stream (make-string-output-stream))))
     (unwind-protect
-	 (progn (format ostream "~&<html><head><style>main{max-width:40em;margin-left:20em}h1,h2{margin-left:-3em}</style></head><body><main>~%")
-		(call-next-method formatter ostream document)
-		(incf (level formatter))
-		(for:for ((item over document))
-		  (format ostream "~&<article>~%")
-		  (format-document formatter ostream item)
-		  (format ostream "~&</article>~%"))
-		(format ostream "~&</main></body></html>~%")
-		(finish-output ostream)
-		(get-output-stream-string ostream))
+         (progn (format ostream "~&<html><head><style>main{max-width:40em;margin-left:20em}h1,h2{margin-left:-3em}</style></head><body><main>~%")
+                (call-next-method formatter ostream document)
+                (incf (level formatter))
+                (for:for ((item over document))
+                  (format ostream "~&<article>~%")
+                  (format-document formatter ostream item)
+                  (format ostream "~&</article>~%"))
+		            (format ostream "~&</main></body></html>~%")
+		            (finish-output ostream)
+		            (get-output-stream-string ostream))
       (unless stream
-	(close ostream)))))
+	      (close ostream)))))

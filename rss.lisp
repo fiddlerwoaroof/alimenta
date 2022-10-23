@@ -87,23 +87,23 @@
 (defun get-date (str)
   (declare (optimize (debug 3)))
   (handler-case
-    (local-time:parse-timestring str)
+      (local-time:parse-timestring str)
     (local-time::invalid-timestring (c) (declare (ignore c))
       (multiple-value-bind (local-time:*default-timezone* timestamp-raw) (extract-date-timezone str)
         (multiple-value-bind (res groups) (cl-ppcre:scan-to-strings "(.*)\s*([+-][0-9]{2,4})\s?$" timestamp-raw)
           (let ((ts (if res (elt groups 0) timestamp-raw))
                 (tz-offset (if res (elt groups 1) "0000")))
             (let* ((timestamp (string-trim " " ts))
-                   ; Handle numeric timzones like -0430 or +0320
+                   ;; Handle numeric timzones like -0430 or +0320
                    (hour-offset (parse-integer tz-offset :end 3))
                    (minute-offset (if (> (length tz-offset) 3)
-                                    (* (signum hour-offset)
-                                       (parse-integer tz-offset :start 3))
-                                    0)))
+                                      (* (signum hour-offset)
+                                         (parse-integer tz-offset :start 3))
+                                      0)))
 
               (loop
                 (restart-case (return
-                                (let-each (:be *)
+                                (fw.lu:let-each (:be *)
                                   (chronicity:parse timestamp)
                                   (local-time:timestamp- * minute-offset :minute)
                                   (local-time:timestamp- * hour-offset   :hour)))
