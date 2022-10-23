@@ -45,13 +45,26 @@
   ((%level :initarg :level :accessor level :initform 0)))
 
 (defmethod format-title ((formatter indent-formatter) (title string))
-  (format nil "+ Title: ~a" title))
+  (format nil "~v,1,0,'*a Title: ~a" (1+ (level formatter)) "" title))
 
 (defmethod format-link ((formatter indent-formatter) (link string))
-  (format nil "  Link: ~a" link))
+  (format nil "~vt Link: ~a" (1+ (level formatter)) link))
+
+
+(defun pp-fill (stream string &optional (colon? t) atsign?)
+  (declare (ignore atsign?))
+  (pprint-logical-block (stream (tokens string)
+                                :prefix (if colon? "(" "")
+                                :suffix (if colon? ")" ""))
+    (pprint-exit-if-list-exhausted)
+    (loop
+      (princ (pprint-pop) stream)
+      (pprint-exit-if-list-exhausted)
+      (write-char #\space stream)
+      (pprint-newline :fill stream))))
 
 (defmethod format-paragraph ((formatter indent-formatter) (paragraph string))
-  (format nil "~&~v,4@t  ~a~%" (level formatter) paragraph))
+  (format nil "~&~v,4@t  ~/alimenta.format::pp-fill/~%" (level formatter) paragraph))
 
 (defmethod format-paragraph ((formatter indent-formatter) (paragraph list))
   (format nil "~&~{  ~a~%~}" paragraph))
