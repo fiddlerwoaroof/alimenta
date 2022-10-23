@@ -45,12 +45,12 @@
    (source-type :initarg :source-type :initform nil :accessor source-type)))
 
 (defmethod render ((feed feed) renderer)
-  (let ((doc (alimenta.render:render-feed feed renderer)))
+  (let ((doc (alimenta.render:render-feed renderer feed)))
     (for:for ((item over feed))
       (setf doc
-            (alimenta.render:add-rendered-item doc
-                                               (alimenta.render:render-item item feed renderer)
-                                               renderer)))
+            (alimenta.render:add-rendered-item renderer
+                                               doc
+                                               (alimenta.render:render-item renderer item feed))))
     doc))
 
 (defmethod (setf feed-link) ((value string) (feed feed))
