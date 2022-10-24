@@ -20,16 +20,15 @@
                #:split-sequence)
   :serial t
   :components ((:file "package")
-               (:file "alimenta")  
+               (:file "alimenta")
                (:file "data-class")
-               (:file "date-handling")
                (:file "render-protocol")
-               (:file "atom")  
-               (:file "rss")  
+               (:file "atom")
+               (:file "rss")
                (:file "fetching")
                (:file "discovery")))
 
-(defsystem :alimenta/patmatch 
+(defsystem :alimenta/patmatch
   :description ""
   :author "Ed L <edward@elangley.org>"
   :license "MIT"

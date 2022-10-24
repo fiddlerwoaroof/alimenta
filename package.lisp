@@ -1,9 +1,5 @@
 ;;;; package.lisp
 
-(defpackage #:collection-class
-  (:use #:cl #:alexandria #:serapeum)
-  (:export collection value-error push-item define-collection random-item nth-item items))
-
 (defpackage :alimenta.render
   (:use :cl )
   (:export #:render-feed #:render-item #:add-rendered-item))
@@ -46,12 +42,7 @@
   (:use #:cl #:alimenta #:alexandria #:anaphora #:lquery)
   (:export #:pull-feed #:fetch-doc-from-url #:fetch-feed-from-url
            #:fetch-error #:feed-ambiguous #:no-feed #:with-user-agent
-	   #:skip-feed))
-
-(defmethod asdf:perform ((o asdf:test-op) (s (eql (asdf:find-system :alimenta))))
-  (asdf:load-system :alimenta)
-  (st:test :package :alimenta)
-  t)
+	         #:skip-feed))
 
 (defpackage #:alimenta.test-runner
   (:use #:cl #:alimenta #:alimenta.atom #:alimenta.discover #:alimenta.pull-feed))
