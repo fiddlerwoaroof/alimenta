@@ -1,6 +1,7 @@
 (defpackage :alimenta.format
   (:use :cl :alexandria :serapeum :fw.lu)
-  (:export format-document format-title format-link format-paragraph))
+  (:export format-document format-title format-link format-paragraph
+           #:indent-feed))
 (in-package :alimenta.format)
 
 (defclass document-formatter ()
@@ -41,6 +42,7 @@
 
 ;;; Define some output formats
 
+;;;; Indentation-based
 (defclass indent-formatter (document-formatter)
   ((%level :initarg :level :accessor level :initform 0)))
 
@@ -75,6 +77,7 @@
   (for:for ((item over document))
     (format-document formatter stream item)))
 
+;;;; HTML
 (defclass html-formatter (document-formatter)
   ((%level :initarg :level :accessor level :initform 0)))
 
@@ -105,3 +108,52 @@
 		            (get-output-stream-string ostream))
       (unless stream
 	      (close ostream)))))
+
+;;;; Org
+
+(defclass org-formatter (document-formatter)
+  ((%level :initarg :level :accessor level :initform 0)))
+
+(defmethod format-document ((formatter org-formatter) stream (document alimenta::feed-entity))
+  (format stream "~&~a~%~a~2%"
+          (format-title formatter (alimenta:title document))
+          (format-link formatter (alimenta:link document))))
+
+(defmethod format-document ((formatter org-formatter) stream (document alimenta:item))
+  (call-next-method)
+  (let ((paragraphs (remove-if (op (every #'whitespacep _))
+                               (lquery:$ (initialize (alimenta:content document))
+                                 (children)
+                                 (text)))))
+    (format stream "~&~{~a~%~}~2&"
+            (map 'list (op (format-paragraph formatter _))
+                 paragraphs))))
+
+(defmethod format-title ((formatter org-formatter) (title string))
+  (with-output-to-string (s)
+    (loop repeat (1+ (level formatter))
+          do (princ #\* s))
+    (princ #\space s)
+    (princ (serapeum:trim-whitespace title) s)))
+
+(defmethod format-link ((formatter org-formatter) (link string))
+  (format nil "~vt[[~a]]" (+ 2 (level formatter)) link))
+
+
+(defmethod format-paragraph ((formatter org-formatter) (paragraph string))
+  (format nil "~&~v,1@t~/alimenta.format::pp-fill/~%" (+ 2 (level formatter)) paragraph))
+
+(defmethod format-paragraph ((formatter org-formatter) (paragraph list))
+  (format nil "~&~{  ~a~%~}" paragraph))
+
+(defmethod format-document ((formatter org-formatter) stream (document alimenta:feed))
+  (call-next-method)
+  (incf (level formatter))
+  (for:for ((item over document))
+    (format-document formatter stream item)))
+
+
+(defun indent-feed (feed &optional (stream *standard-output*))
+  (format-document (make-instance 'alimenta.format::indent-formatter)
+                   stream
+                   feed))
