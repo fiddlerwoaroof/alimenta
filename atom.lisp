@@ -125,6 +125,8 @@
                      :logo doc-logo
                      :link doc-link
                      :links doc-links
+                     :updated doc-updated
+                     :id doc-id
                      :feed-link doc-feed-link
                      :subtitle doc-subtitle
                      :categories (coerce doc-categories 'list)
