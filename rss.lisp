@@ -66,8 +66,10 @@
   (let ((tz-inited nil))
     (flet ((init-tz ()
              (unless tz-inited
-               (local-time:reread-timezone-repository)
-               (setf tz-inited t))))
+               (handler-case (local-time:find-timezone-by-location-name "America/Los_Angeles")
+                 (error ()
+                   (local-time:reread-timezone-repository)
+                   (setf tz-inited t))))))
 
       (macrolet ((ensure-tz-inited (&body body)
                    `(progn (init-tz)
