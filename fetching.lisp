@@ -5,8 +5,8 @@
   `(let ((plump:*tag-dispatchers* plump:*xml-tags*)
          (drakma:*drakma-default-external-format* :utf-8)
          (drakma:*text-content-types*
-           (pairlis '("application" "application" "application")
-                    '("atom+xml"    "rss+xml"     "xml")
+           (pairlis '("application" "application" "application" "application")
+                    '("atom+xml"    "rss+xml"     "xml"         "rdf+xml")
                     drakma:*text-content-types*)))
      ,@body))
 

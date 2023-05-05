@@ -158,6 +158,7 @@
                                           (map #'tag-name) (node))))))
     (case root-node-name
       ((:feed) :atom)
+      ((:rdf :|RDF:RDF|) :rss)
       (t root-node-name))))
 
 (defgeneric get-random-item (feed)
