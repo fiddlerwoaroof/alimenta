@@ -16,6 +16,7 @@
 (defclass atom-feed (alimenta:feed)
   ((subtitle   :initarg :subtitle                        :initform nil :accessor subtitle)
    (id         :initarg :id                              :initform nil :accessor id)
+   (links      :initarg :links                           :initform nil :accessor links)
    (icon       :initarg :icon                            :initform nil :accessor icon)
    (categories :initarg :categories :type (or null list) :initform nil :accessor categories)
    (logo       :initarg :logo                            :initform nil :accessor logo)
@@ -101,8 +102,18 @@
           (doc-id (get-feed-elem "feed > id"))
           (doc-updated (awhen (get-feed-elem "feed > updated")
                          (local-time:parse-timestring it)))
-          (doc-link (get-feed-elem-attr "feed > link[rel=alternate]" "href"))
-          (doc-feed-link (or feed-link (get-feed-elem-attr "feed > link[rel=self]" "href")))
+          (doc-link (or (get-feed-elem-attr "feed > link[rel=alternate]" "href")
+                        (get-feed-elem-attr "feed > link:not([rel=self])" "href")
+                        (get-feed-elem-attr "feed > link[rel=self]" "href")
+                        feed-link))
+
+          (doc-links (coerce ($ (inline xml-dom)
+                               "feed > link"
+                               (combine (attr "rel")
+                                        (attr "href")))
+                             'list))
+          (doc-feed-link (or feed-link
+                             (get-feed-elem-attr "feed > link[rel=self]" "href")))
           (doc-categories ($ (inline xml-dom) "feed > category"
                             (combine (attr "term") (attr "label") (attr "scheme"))
                             (map-apply #'make-category)))
@@ -113,8 +124,7 @@
                      :icon doc-icon
                      :logo doc-logo
                      :link doc-link
-                     :updated doc-updated
-                     :id doc-id
+                     :links doc-links
                      :feed-link doc-feed-link
                      :subtitle doc-subtitle
                      :categories (coerce doc-categories 'list)
