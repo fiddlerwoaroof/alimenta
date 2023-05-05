@@ -25,7 +25,10 @@
 
 (defun fetch-doc-from-url (url)
   (setup-libraries-for-feeds
-    (let ((data (drakma:http-request url :user-agent *user-agent*)))
+    (let ((data (drakma:http-request url :user-agent *user-agent* :decode-content t)))
+      (when (and (not (stringp data))
+                 (vectorp data))
+        (setf data (babel:octets-to-string data)))
       (plump:parse data))))
 
 (define-condition fetch-error (error) ())
