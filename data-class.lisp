@@ -75,5 +75,5 @@
          ,@(loop for (slot _ tag-name . rest) in slots
                  collect `(lazy-load-slot ,name ,doc-slot ,root-el ,slot ,tag-name ,@rest))
          (defmethod %all-slots ((self ,name) format)
-           (pairlis (list ,@(mapcar (fw.lu::alambda (cadr it)) slots))
+           (pairlis (list ,@(mapcar (fw.lu::alambda (cadr fw.lu::it)) slots))
                     (list ,@(loop for (slot) in slots collect `(,slot self)))))))))
